@@ -35,8 +35,7 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = params;
-
+    const { userId } = await params;
     await connectToDatabase();
 
     const user = await User.findOne({ userId }).select("-password");
@@ -67,7 +66,7 @@ export async function PUT(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
 
     await connectToDatabase();
@@ -110,7 +109,7 @@ export async function DELETE(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     await connectToDatabase();
 

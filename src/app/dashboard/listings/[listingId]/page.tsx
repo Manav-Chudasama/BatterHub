@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import React from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import TradeRequestModal from "@/components/TradeRequestModal";
 import { motion } from "framer-motion";
 import {
   RiEditLine,
@@ -19,6 +20,7 @@ import {
   RiEyeLine,
   RiCheckboxCircleLine,
   RiDeleteBinLine,
+  RiExchangeLine,
 } from "react-icons/ri";
 
 interface Listing {
@@ -27,7 +29,7 @@ interface Listing {
   description: string;
   category: string;
   images: string[];
-  status: "active" | "inactive" | "traded" | "deleted";
+  status: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -37,7 +39,6 @@ interface Listing {
   availability: string[];
   user: {
     name: string;
-    profilePicture?: string;
     location?: {
       city?: string;
       state?: string;
@@ -51,61 +52,66 @@ export default function ListingDetailPage({
 }: {
   params: { listingId: string };
 }) {
-  const router = useRouter();
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showTradeModal, setShowTradeModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [newStatus, setNewStatus] = useState<
-    "active" | "inactive" | "traded" | null
-  >(null);
-
-  // Extract listingId directly
-  const { listingId } = params;
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState<string | null>(null);
+  const isOwner = user && listing?.userId === user.id;
 
   useEffect(() => {
     const fetchListing = async () => {
+      setIsLoading(true);
+      setError("");
+
       try {
-        const response = await fetch(`/api/listings/${listingId}`);
+        const response = await fetch(`/api/listings/${params.listingId}`);
 
         if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Listing not found");
-          }
-          throw new Error("Failed to fetch listing");
+          throw new Error(
+            response.status === 404
+              ? "Listing not found"
+              : "Failed to fetch listing"
+          );
         }
 
         const data = await response.json();
-        setListing(data);
-      } catch (error) {
-        console.error("Error fetching listing:", error);
+        setListing(data.listing);
+      } catch (err) {
+        console.error("Error fetching listing:", err);
         setError(
-          error instanceof Error ? error.message : "An unknown error occurred"
+          err instanceof Error
+            ? err.message
+            : "Failed to load listing. Please try again."
         );
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchListing();
-  }, [listingId]);
+    if (params.listingId) {
+      fetchListing();
+    }
+  }, [params.listingId]);
 
-  const isOwner = isLoaded && user && listing?.userId === user.id;
-
-  const handleShowStatusModal = (status: "active" | "inactive" | "traded") => {
+  // Handle showing status modal
+  const handleShowStatusModal = (status: string) => {
     setNewStatus(status);
     setShowStatusModal(true);
   };
 
+  // Handle status change confirmation
   const confirmStatusChange = async () => {
     if (!listing || !newStatus) return;
 
     try {
-      const response = await fetch(`/api/listings/${listing._id}`, {
-        method: "PUT",
+      const response = await fetch(`/api/listings/${listing._id}/status`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -113,36 +119,38 @@ export default function ListingDetailPage({
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update listing status to ${newStatus}`);
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update listing status");
       }
 
-      // Refresh the listing data
-      const updatedResponse = await fetch(`/api/listings/${listing._id}`);
-      if (updatedResponse.ok) {
-        const updatedData = await updatedResponse.json();
-        setListing(updatedData);
-      }
+      // Update the listing in state
+      setListing((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setShowStatusModal(false);
+      setNewStatus(null);
     } catch (err) {
       console.error("Error updating listing status:", err);
       setError(
-        `Failed to update listing status to ${newStatus}. Please try again.`
+        err instanceof Error
+          ? err.message
+          : "Failed to update listing status. Please try again."
       );
-    } finally {
       setShowStatusModal(false);
-      setNewStatus(null);
     }
   };
 
+  // Handle delete
   const handleDelete = async () => {
     if (!listing) return;
 
     try {
+      // Call API to delete the listing
       const response = await fetch(`/api/listings/${listing._id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete listing");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete listing");
       }
 
       router.push("/dashboard/listings/my");
@@ -406,6 +414,25 @@ export default function ListingDetailPage({
                 )}
               </div>
             )}
+
+            {/* Actions for non-owner */}
+            {!isOwner &&
+              isLoaded &&
+              user &&
+              listing &&
+              listing.status === "active" && (
+                <div className="mt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowTradeModal(true)}
+                    className="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center"
+                  >
+                    <RiExchangeLine className="w-5 h-5 mr-2" />
+                    Request Trade
+                  </motion.button>
+                </div>
+              )}
           </div>
 
           {/* Listing Details */}
@@ -578,6 +605,16 @@ export default function ListingDetailPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Trade Request Modal */}
+      {showTradeModal && listing && (
+        <TradeRequestModal
+          isOpen={showTradeModal}
+          onClose={() => setShowTradeModal(false)}
+          listingId={listing._id}
+          listingTitle={listing.title}
+        />
       )}
     </DashboardLayout>
   );

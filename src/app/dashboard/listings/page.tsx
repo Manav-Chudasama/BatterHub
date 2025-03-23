@@ -251,18 +251,18 @@ export default function ListingsPage() {
               >
                 <RiListUnordered className="w-5 h-5" />
               </button>
-            </div>
-            <button
-              onClick={() => setIsFilterOpen(true)}
+          </div>
+          <button
+            onClick={() => setIsFilterOpen(true)}
               className="relative p-3 rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02] transition-colors"
-            >
-              <RiFilter3Line className="w-5 h-5" />
-              {activeFilterCount > 0 && (
+          >
+            <RiFilter3Line className="w-5 h-5" />
+            {activeFilterCount > 0 && (
                 <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
           </div>
         </div>
 
@@ -295,10 +295,10 @@ export default function ListingsPage() {
         {isGridView ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredListings.map((listing) => (
-              <motion.div
+            <motion.div
                 key={listing._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
                 className="group bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-colors cursor-pointer"
                 onClick={() => handleViewListing(listing._id)}
               >
@@ -308,9 +308,9 @@ export default function ListingsPage() {
                       listing.images?.[0] ||
                       "https://placehold.co/400x300?text=No+Image"
                     }
-                    alt={listing.title}
-                    className="w-full h-full object-cover"
-                  />
+                  alt={listing.title}
+                  className="w-full h-full object-cover"
+                />
                   <div className="absolute top-2 right-2">
                     <span
                       className={`px-2 py-1 rounded-lg text-xs font-medium
@@ -341,22 +341,22 @@ export default function ListingsPage() {
                   </button>
                 </div>
                 <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
+                <div className="flex items-start justify-between mb-4">
+                  <div>
                       <h3 className="text-lg font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-500 transition-colors">
-                        {listing.title}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-black/60 dark:text-white/60">
+                      {listing.title}
+                    </h3>
+                    <div className="flex items-center space-x-4 text-sm text-black/60 dark:text-white/60">
                         {listing.user.location?.city && (
-                          <div className="flex items-center">
-                            <RiMapPinLine className="w-4 h-4 mr-1" />
+                      <div className="flex items-center">
+                        <RiMapPinLine className="w-4 h-4 mr-1" />
                             {listing.user.location.city}
-                          </div>
+                      </div>
                         )}
                         {listing.availability &&
                           listing.availability.length > 0 && (
-                            <div className="flex items-center">
-                              <RiTimeLine className="w-4 h-4 mr-1" />
+                      <div className="flex items-center">
+                        <RiTimeLine className="w-4 h-4 mr-1" />
                               {listing.availability[0]}
                               {listing.availability.length > 1 && "..."}
                             </div>
@@ -470,9 +470,9 @@ export default function ListingsPage() {
                               </div>
                             )}
                         </div>
-                      </div>
-                    </div>
-                    <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+                  </div>
+                </div>
+                <p className="text-sm text-black/60 dark:text-white/60 mb-4">
                       {listing.description.length > 200
                         ? listing.description.substring(0, 200) + "..."
                         : listing.description}
@@ -483,7 +483,7 @@ export default function ListingsPage() {
                           {listing.user.profilePicture ? (
                             <img
                               src={listing.user.profilePicture}
-                              alt={listing.user.name}
+                      alt={listing.user.name}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -493,18 +493,18 @@ export default function ListingsPage() {
                           )}
                         </div>
                         <span className="text-sm font-medium">
-                          {listing.user.name}
+                        {listing.user.name}
                         </span>
                       </div>
                       <div className="text-xs px-2 py-1 rounded-full bg-black/[.02] dark:bg-white/[.02]">
                         {listing.category}
                       </div>
                     </div>
-                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
         )}
 
         {/* Filter Drawer */}

@@ -37,7 +37,7 @@ export async function GET(
   { params }: { params: { listingId: string } }
 ) {
   try {
-    const { listingId } = await params;
+    const { listingId } = params;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(listingId)) {
@@ -64,9 +64,9 @@ export async function GET(
     // Increment view count
     await Listing.findByIdAndUpdate(listingId, { $inc: { views: 1 } });
 
-    return NextResponse.json(listing, { headers: corsHeaders });
+    return NextResponse.json({ listing }, { headers: corsHeaders });
   } catch (error) {
-    const { listingId } = await params;
+    const { listingId } = params;
     console.error(`Error fetching listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch listing" },
@@ -154,7 +154,7 @@ export async function PUT(
 
     return NextResponse.json(updatedListing, { headers: corsHeaders });
   } catch (error) {
-    const { listingId } = await params;
+    const { listingId } = params;
     console.error(`Error updating listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to update listing" },
@@ -172,7 +172,7 @@ export async function DELETE(
   { params }: { params: { listingId: string } }
 ) {
   try {
-    const { listingId } = await params;
+    const { listingId } = params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -221,7 +221,7 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { listingId } = await params;
+    const { listingId } = params;
     console.error(`Error deleting listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete listing" },
