@@ -92,36 +92,36 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
         {/* Greeting & Quick Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="lg:col-span-2 bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6"
+            className="lg:col-span-2 bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4 lg:p-6"
           >
-            <h2 className="text-2xl font-bold mb-2">
+            <h2 className="text-xl lg:text-2xl font-bold mb-2">
               Welcome back, {firstName}! 👋
             </h2>
-            <p className="text-black/60 dark:text-white/60 mb-6">
+            <p className="text-black/60 dark:text-white/60 mb-4 lg:mb-6">
               Here&apos;s what&apos;s happening with your trades today.
             </p>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
-                <div className="text-2xl font-bold mb-1">12</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+              <div className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
+                <div className="text-xl lg:text-2xl font-bold mb-1">12</div>
                 <div className="text-sm text-black/60 dark:text-white/60">
                   Active Trades
                 </div>
               </div>
-              <div className="p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
-                <div className="text-2xl font-bold mb-1">28</div>
+              <div className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
+                <div className="text-xl lg:text-2xl font-bold mb-1">28</div>
                 <div className="text-sm text-black/60 dark:text-white/60">
                   Completed
                 </div>
               </div>
-              <div className="p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
-                <div className="text-2xl font-bold mb-1">95%</div>
+              <div className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
+                <div className="text-xl lg:text-2xl font-bold mb-1">95%</div>
                 <div className="text-sm text-black/60 dark:text-white/60">
                   Success Rate
                 </div>
@@ -133,7 +133,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6"
+            className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4 lg:p-6"
           >
             <h3 className="font-semibold mb-4">Quick Actions</h3>
             <div className="space-y-3">
@@ -161,19 +161,19 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
         >
           {recommendedTrades.map((trade, index) => (
             <div
               key={index}
-              className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6"
+              className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4 lg:p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <img
                     src={trade.userImage}
                     alt={trade.user}
-                    className="w-10 h-10 rounded-full"
+                    className="w-8 h-8 lg:w-10 lg:h-10 rounded-full"
                   />
                   <div>
                     <h4 className="font-medium">{trade.user}</h4>
@@ -202,19 +202,19 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6"
+          className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4 lg:p-6"
         >
           <h3 className="font-semibold mb-4">Recent Activity</h3>
           <div className="space-y-4">
             {recentActivity.map((activity, index) => (
               <div
                 key={index}
-                className="flex items-center space-x-4 p-4 rounded-lg hover:bg-black/[.02] dark:hover:bg-white/[.02] transition-colors"
+                className="flex items-center space-x-3 lg:space-x-4 p-3 lg:p-4 rounded-lg hover:bg-black/[.02] dark:hover:bg-white/[.02] transition-colors"
               >
                 <img
                   src={activity.userImage}
                   alt={activity.user}
-                  className="w-10 h-10 rounded-full"
+                  className="w-8 h-8 lg:w-10 lg:h-10 rounded-full"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm">

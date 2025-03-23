@@ -5,7 +5,7 @@ import { Stats } from "@/components/sections/Stats";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { Footer } from "@/components/Footer";
+import Footer from "@/components/Footer";
 
 // Dynamically import Lottie component with SSR disabled
 const LottieAnimation = dynamic(() => import("@/components/LottieAnimation"), {

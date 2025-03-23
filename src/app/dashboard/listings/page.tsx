@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import FilterDrawer from "@/components/dashboard/FilterDrawer";
 import { motion } from "framer-motion";
@@ -10,11 +12,11 @@ import {
   RiGridFill,
   RiListUnordered,
   RiMapPinLine,
-  RiStarFill,
   RiTimeLine,
-  RiArrowDownSLine,
-  RiCloseLine,
   RiAddCircleLine,
+  RiBookmarkLine,
+  RiBookmarkFill,
+  RiAlertLine,
 } from "react-icons/ri";
 
 interface Filters {
@@ -24,25 +26,33 @@ interface Filters {
   rating: number;
   categories: string[];
   selectedCategories: string[];
+  status?: string;
 }
 
-// interface Listing {
-//   id: number;
-//   title: string;
-//   description: string;
-//   category: string;
-//   image: string;
-//   user: {
-//     name: string;
-//     avatar: string;
-//     rating: number;
-//     reviews: number;
-//   };
-//   looking: string[];
-//   location: string;
-//   availability: string;
-//   popularity: number;
-// }
+interface Listing {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  images: string[];
+  status: "active" | "inactive" | "traded" | "deleted";
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  tradePreferences: string;
+  views: number;
+  tradeRequests: string[];
+  availability: string[];
+  user: {
+    name: string;
+    profilePicture?: string;
+    location?: {
+      city?: string;
+      state?: string;
+      country?: string;
+    };
+  };
+}
 
 // Categories array
 const categories = [
@@ -56,101 +66,16 @@ const categories = [
   "Professional Skills",
 ];
 
-// Mock data for listings (keep existing listings array)
-const listings = [
-  {
-    id: 1,
-    title: "Python Programming Tutoring",
-    description:
-      "Expert Python programming help for beginners to advanced learners. Can help with assignments, projects, and concept understanding.",
-    category: "Technology",
-    image:
-      "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800&auto=format&fit=crop&q=60",
-    user: {
-      name: "Alex Chen",
-      avatar: "https://i.pravatar.cc/150?img=11",
-      rating: 4.8,
-      reviews: 24,
-    },
-    looking: ["Guitar Lessons", "Spanish Language", "Graphic Design"],
-    location: "Cambridge, MA",
-    availability: "Weekends",
-    popularity: 95,
-  },
-  {
-    id: 2,
-    title: "Guitar Lessons for Beginners",
-    description:
-      "Patient and experienced guitar teacher offering lessons for beginners. Classical and acoustic guitar styles covered.",
-    category: "Music & Arts",
-    image:
-      "https://images.unsplash.com/photo-1525201548942-d8732f6617a0?w=800&auto=format&fit=crop&q=60",
-    user: {
-      name: "Maria Garcia",
-      avatar: "https://i.pravatar.cc/150?img=12",
-      rating: 4.9,
-      reviews: 36,
-    },
-    looking: ["Math Tutoring", "Web Development", "Photography"],
-    location: "Boston, MA",
-    availability: "Weekday Evenings",
-    popularity: 88,
-  },
-  {
-    id: 3,
-    title: "Digital Photography Basics",
-    description:
-      "Learn the fundamentals of digital photography. Covering composition, lighting, and basic editing techniques.",
-    category: "Creative Skills",
-    image:
-      "https://images.unsplash.com/photo-1452780212940-6f5c0d14d848?w=800&auto=format&fit=crop&q=60",
-    user: {
-      name: "James Wilson",
-      avatar: "https://i.pravatar.cc/150?img=13",
-      rating: 4.7,
-      reviews: 18,
-    },
-    looking: ["Language Exchange", "Cooking Lessons", "Fitness Training"],
-    location: "Somerville, MA",
-    availability: "Flexible",
-    popularity: 92,
-  },
-  {
-    id: 4,
-    title: "Spanish Language Exchange",
-    description:
-      "Native Spanish speaker offering language exchange sessions. Perfect for intermediate learners looking to improve conversation skills.",
-    category: "Language Learning",
-    image:
-      "https://images.unsplash.com/photo-1610484826967-09c5720778c7?w=800&auto=format&fit=crop&q=60",
-    user: {
-      name: "Sofia Rodriguez",
-      avatar: "https://i.pravatar.cc/150?img=14",
-      rating: 4.9,
-      reviews: 42,
-    },
-    looking: ["English Practice", "Math Tutoring", "Music Theory"],
-    location: "Cambridge, MA",
-    availability: "Mornings",
-    popularity: 94,
-  },
-  // Add more listings as needed
-];
-
-// Sorting options
-const sortOptions = [
-  { label: "Best Match", value: "match" },
-  { label: "Newest First", value: "newest" },
-  { label: "Highest Rated", value: "rating" },
-  { label: "Closest", value: "distance" },
-];
-
 export default function ListingsPage() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [isGridView, setIsGridView] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("match");
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [savedListings, setSavedListings] = useState<string[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState<Filters>({
     availability: [],
     skillLevel: "",
@@ -158,6 +83,7 @@ export default function ListingsPage() {
     rating: 4,
     categories: categories,
     selectedCategories: [],
+    status: "active",
   });
 
   // Active filter count
@@ -168,290 +94,418 @@ export default function ListingsPage() {
     (filters.rating > 1 ? 1 : 0) +
     (filters.distance !== 50 ? 1 : 0);
 
+  // Fetch all listings
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchListings();
+    }
+  }, [isLoaded, user, filters.status]);
+
+  const fetchListings = async () => {
+    setIsLoading(true);
+    try {
+      // Add status filter if it exists
+      const statusParam = filters.status ? `status=${filters.status}` : "";
+      const response = await fetch(`/api/listings?${statusParam}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch listings");
+      }
+
+      const data = await response.json();
+      setListings(data.listings);
+    } catch (err) {
+      console.error("Error fetching listings:", err);
+      setError("Failed to load listings. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleSaved = async (listingId: string) => {
+    setSavedListings((prev) =>
+      prev.includes(listingId)
+        ? prev.filter((id) => id !== listingId)
+        : [...prev, listingId]
+    );
+
+    // Here you would typically update a saved listings API
+    // For now, we're just updating the local state
+  };
+
+  // Handle viewing listing details
+  const handleViewListing = (listingId: string) => {
+    router.push(`/dashboard/listings/${listingId}`);
+  };
+
+  // Filter listings based on search query
+  const filteredListings = listings.filter((listing) => {
+    if (searchQuery === "") return true;
+    return (
+      listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      listing.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  // Redirect if not authenticated
+  if (isLoaded && !user) {
+    router.push("/");
+    return null;
+  }
+
+  // Show loading state
+  if (!isLoaded || isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto space-y-8 animate-pulse">
+          <div className="h-24 bg-black/[.02] dark:bg-white/[.02] rounded-lg" />
+          <div className="h-12 bg-black/[.02] dark:bg-white/[.02] rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="h-64 bg-black/[.02] dark:bg-white/[.02] rounded-lg"
+              />
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header with improved layout */}
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6">
           <div>
-            <h1 className="text-2xl font-bold">Your Listings</h1>
+            <h1 className="text-2xl font-bold">Browse Listings</h1>
             <p className="text-black/60 dark:text-white/60">
-              Manage and browse your active listings
+              Discover skills and services available for trade
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-sm font-medium flex items-center space-x-2"
-              >
-                <span>
-                  Sort by:{" "}
-                  {sortOptions.find((opt) => opt.value === sortBy)?.label}
-                </span>
-                <RiArrowDownSLine className="w-4 h-4" />
-              </button>
-              {showSortDropdown && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black shadow-lg py-2 z-10">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setShowSortDropdown(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-black/[.02] dark:hover:bg-white/[.02] ${
-                        sortBy === option.value
-                          ? "text-emerald-600 dark:text-emerald-500"
-                          : "text-black/60 dark:text-white/60"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* View Toggle */}
-            <div className="flex items-center space-x-2 border border-black/[.08] dark:border-white/[.08] rounded-lg p-1">
-              <button
-                onClick={() => setIsGridView(true)}
-                className={`p-2 rounded-md transition-colors ${
-                  isGridView
-                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
-                    : "text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02]"
-                }`}
-              >
-                <RiGridFill className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setIsGridView(false)}
-                className={`p-2 rounded-md transition-colors ${
-                  !isGridView
-                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
-                    : "text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02]"
-                }`}
-              >
-                <RiListUnordered className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/dashboard/listings/new")}
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center space-x-2"
+            >
+              <RiAddCircleLine className="w-5 h-5" />
+              <span>Create Listing</span>
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/listings/saved")}
+              className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium transition-colors flex items-center space-x-2"
+            >
+              <RiBookmarkLine className="w-5 h-5" />
+              <span>Saved</span>
+            </button>
           </div>
         </div>
 
-        {/* Search and Filters with improved design */}
+        {/* Search and Filters */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr,auto] gap-4">
           <div className="relative">
             <RiSearchLine className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black/60 dark:text-white/60" />
             <input
               type="text"
-              placeholder="Search your listings..."
+              placeholder="Search for skills, services, or keywords..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
-          <button
-            onClick={() => setIsFilterOpen(true)}
-            className="px-4 py-3 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 flex items-center space-x-2"
-          >
-            <RiFilter3Line className="w-5 h-5" />
-            <span>Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 text-xs font-medium">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <select
+                value={filters.status}
+                onChange={(e) =>
+                  setFilters({ ...filters, status: e.target.value })
+                }
+                className="pl-4 pr-10 py-3 rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 appearance-none"
+              >
+                <option value="active">Active Only</option>
+                <option value="">All Listings</option>
+                <option value="inactive">Inactive</option>
+                <option value="traded">Traded</option>
+              </select>
+            </div>
+            <div className="flex items-center rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black">
+              <button
+                onClick={() => setIsGridView(true)}
+                className={`p-3 rounded-l-lg transition-colors ${
+                  isGridView
+                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
+                    : "text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02]"
+                }`}
+              >
+                <RiGridFill className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setIsGridView(false)}
+                className={`p-3 rounded-r-lg transition-colors ${
+                  !isGridView
+                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
+                    : "text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02]"
+                }`}
+              >
+                <RiListUnordered className="w-5 h-5" />
+              </button>
+            </div>
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              className="relative p-3 rounded-lg border border-black/[.08] dark:border-white/[.08] bg-white dark:bg-black text-black/60 dark:text-white/60 hover:bg-black/[.02] dark:hover:bg-white/[.02] transition-colors"
+            >
+              <RiFilter3Line className="w-5 h-5" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Active Filters */}
-        {activeFilterCount > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {filters.selectedCategories.map((category) => (
-              <button
-                key={category}
-                onClick={() =>
-                  setFilters({
-                    ...filters,
-                    selectedCategories: filters.selectedCategories.filter(
-                      (c) => c !== category
-                    ),
-                  })
-                }
-                className="px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 text-sm font-medium flex items-center space-x-1"
-              >
-                <span>{category}</span>
-                <RiCloseLine className="w-4 h-4" />
-              </button>
-            ))}
-            {filters.skillLevel && (
-              <button
-                onClick={() => setFilters({ ...filters, skillLevel: "" })}
-                className="px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 text-sm font-medium flex items-center space-x-1"
-              >
-                <span>{filters.skillLevel}</span>
-                <RiCloseLine className="w-4 h-4" />
-              </button>
-            )}
-            {filters.availability.length > 0 && (
-              <button
-                onClick={() => setFilters({ ...filters, availability: [] })}
-                className="px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 text-sm font-medium flex items-center space-x-1"
-              >
-                <span>{filters.availability.length} Availabilities</span>
-                <RiCloseLine className="w-4 h-4" />
-              </button>
-            )}
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg flex items-center">
+            <RiAlertLine className="w-5 h-5 mr-2" />
+            {error}
+          </div>
+        )}
+
+        {/* No results */}
+        {filteredListings.length === 0 && !isLoading && (
+          <div className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6 text-center">
+            <p className="text-black/60 dark:text-white/60">
+              {searchQuery
+                ? "No listings found matching your search."
+                : "No listings available at the moment."}
+            </p>
             <button
-              onClick={() =>
-                setFilters({
-                  ...filters,
-                  availability: [],
-                  skillLevel: "",
-                  distance: 50,
-                  rating: 1,
-                  selectedCategories: [],
-                })
-              }
-              className="px-3 py-1.5 rounded-full border border-black/[.08] dark:border-white/[.08] text-black/60 dark:text-white/60 text-sm font-medium hover:bg-black/[.02] dark:hover:bg-white/[.02]"
+              onClick={() => router.push("/dashboard/listings/new")}
+              className="mt-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
             >
-              Clear all
+              Create a Listing
             </button>
           </div>
         )}
 
-        {/* Create Listing Button */}
-        <div className="flex justify-end">
-          <button className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors flex items-center space-x-2">
-            <RiAddCircleLine className="w-5 h-5" />
-            <span>Create New Listing</span>
-          </button>
-        </div>
-
-        {/* Listings Grid/List */}
-        <div
-          className={`grid gap-6 ${
-            isGridView
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-              : "grid-cols-1"
-          }`}
-        >
-          {listings.map((listing) => (
-            <motion.div
-              key={listing.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden ${
-                isGridView ? "" : "flex"
-              }`}
-            >
-              <div
-                className={`relative ${
-                  isGridView ? "aspect-[4/3]" : "w-72 flex-shrink-0"
-                }`}
+        {/* Grid View */}
+        {isGridView ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredListings.map((listing) => (
+              <motion.div
+                key={listing._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-colors cursor-pointer"
+                onClick={() => handleViewListing(listing._id)}
               >
-                <img
-                  src={listing.image}
-                  alt={listing.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/60 text-white text-xs font-medium">
-                  {listing.category}
-                </div>
-              </div>
-              <div className="p-6 flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">
-                      {listing.title}
-                    </h3>
-                    <div className="flex items-center space-x-4 text-sm text-black/60 dark:text-white/60">
-                      <div className="flex items-center">
-                        <RiMapPinLine className="w-4 h-4 mr-1" />
-                        {listing.location}
-                      </div>
-                      <div className="flex items-center">
-                        <RiTimeLine className="w-4 h-4 mr-1" />
-                        {listing.availability}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-1 text-yellow-400">
-                    <RiStarFill className="w-4 h-4" />
-                    <span className="font-medium">{listing.user.rating}</span>
-                  </div>
-                </div>
-                <p className="text-sm text-black/60 dark:text-white/60 mb-4">
-                  {listing.description}
-                </p>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <img
-                      src={listing.user.avatar}
-                      alt={listing.user.name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div>
-                      <div className="text-sm font-medium">
-                        {listing.user.name}
-                      </div>
-                      <div className="text-xs text-black/60 dark:text-white/60">
-                        {listing.user.reviews} reviews
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-black/60 dark:text-white/60">
-                    <span className="text-emerald-600 dark:text-emerald-500 font-medium">
-                      {listing.popularity}% Match
+                <div className="relative aspect-[4/3]">
+                  <img
+                    src={
+                      listing.images?.[0] ||
+                      "https://placehold.co/400x300?text=No+Image"
+                    }
+                    alt={listing.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span
+                      className={`px-2 py-1 rounded-lg text-xs font-medium
+                      ${
+                        listing.status === "active"
+                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
+                          : listing.status === "traded"
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500"
+                          : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500"
+                      }`}
+                    >
+                      {listing.status.charAt(0).toUpperCase() +
+                        listing.status.slice(1)}
                     </span>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSaved(listing._id);
+                    }}
+                    className="absolute top-2 left-2 p-2 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500"
+                  >
+                    {savedListings.includes(listing._id) ? (
+                      <RiBookmarkFill className="w-5 h-5 text-emerald-600" />
+                    ) : (
+                      <RiBookmarkLine className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Looking for:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {listing.looking.map((item, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 rounded-lg bg-black/[.02] dark:bg-white/[.02] text-xs"
-                      >
-                        {item}
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-500 transition-colors">
+                        {listing.title}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-black/60 dark:text-white/60">
+                        {listing.user.location?.city && (
+                          <div className="flex items-center">
+                            <RiMapPinLine className="w-4 h-4 mr-1" />
+                            {listing.user.location.city}
+                          </div>
+                        )}
+                        {listing.availability &&
+                          listing.availability.length > 0 && (
+                            <div className="flex items-center">
+                              <RiTimeLine className="w-4 h-4 mr-1" />
+                              {listing.availability[0]}
+                              {listing.availability.length > 1 && "..."}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+                    {listing.description.length > 120
+                      ? listing.description.substring(0, 120) + "..."
+                      : listing.description}
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
+                        {listing.user.profilePicture ? (
+                          <img
+                            src={listing.user.profilePicture}
+                            alt={listing.user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
+                            {listing.user.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">
+                        {listing.user.name}
                       </span>
-                    ))}
+                    </div>
+                    <div className="text-xs px-2 py-1 rounded-full bg-black/[.02] dark:bg-white/[.02]">
+                      {listing.category}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 flex space-x-2">
-                  <button className="flex-1 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors">
-                    Propose Trade
-                  </button>
-                  <button className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium">
-                    Save
-                  </button>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          // List View
+          <div className="space-y-4">
+            {filteredListings.map((listing) => (
+              <motion.div
+                key={listing._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-colors cursor-pointer"
+                onClick={() => handleViewListing(listing._id)}
+              >
+                <div className="flex flex-col md:flex-row">
+                  <div className="md:w-48 lg:w-64">
+                    <div className="aspect-[4/3] relative">
+                      <img
+                        src={
+                          listing.images?.[0] ||
+                          "https://placehold.co/400x300?text=No+Image"
+                        }
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <span
+                          className={`px-2 py-1 rounded-lg text-xs font-medium
+                          ${
+                            listing.status === "active"
+                              ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
+                              : listing.status === "traded"
+                              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500"
+                              : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500"
+                          }`}
+                        >
+                          {listing.status.charAt(0).toUpperCase() +
+                            listing.status.slice(1)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSaved(listing._id);
+                        }}
+                        className="absolute top-2 left-2 p-2 rounded-full bg-white/80 dark:bg-black/80 backdrop-blur-sm text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500"
+                      >
+                        {savedListings.includes(listing._id) ? (
+                          <RiBookmarkFill className="w-5 h-5 text-emerald-600" />
+                        ) : (
+                          <RiBookmarkLine className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-6 flex-1">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-500 transition-colors">
+                          {listing.title}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-black/60 dark:text-white/60">
+                          {listing.user.location?.city && (
+                            <div className="flex items-center">
+                              <RiMapPinLine className="w-4 h-4 mr-1" />
+                              {listing.user.location.city}
+                            </div>
+                          )}
+                          {listing.availability &&
+                            listing.availability.length > 0 && (
+                              <div className="flex items-center">
+                                <RiTimeLine className="w-4 h-4 mr-1" />
+                                {listing.availability[0]}
+                                {listing.availability.length > 1 && "..."}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-black/60 dark:text-white/60 mb-4">
+                      {listing.description.length > 200
+                        ? listing.description.substring(0, 200) + "..."
+                        : listing.description}
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
+                          {listing.user.profilePicture ? (
+                            <img
+                              src={listing.user.profilePicture}
+                              alt={listing.user.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
+                              {listing.user.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium">
+                          {listing.user.name}
+                        </span>
+                      </div>
+                      <div className="text-xs px-2 py-1 rounded-full bg-black/[.02] dark:bg-white/[.02]">
+                        {listing.category}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="flex justify-center space-x-2">
-          <button className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium">
-            Previous
-          </button>
-          <button className="px-4 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 text-sm font-medium">
-            1
-          </button>
-          <button className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium">
-            2
-          </button>
-          <button className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium">
-            3
-          </button>
-          <button className="px-4 py-2 rounded-lg border border-black/[.08] dark:border-white/[.08] hover:bg-black/[.02] dark:hover:bg-white/[.02] text-black/60 dark:text-white/60 text-sm font-medium">
-            Next
-          </button>
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         {/* Filter Drawer */}
         <FilterDrawer
