@@ -56,9 +56,9 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error fetching skills for user ${params.userId}:`, error);
+    console.error(`Error fetching skills for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to fetch skills and interests" },
+      { error: "Failed to fetch skills" },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -118,9 +118,9 @@ export async function PUT(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error updating skills for user ${params.userId}:`, error);
+    console.error(`Error updating skills for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to update skills and interests" },
+      { error: "Failed to update skills" },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -194,9 +194,9 @@ export async function POST(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error adding skills for user ${params.userId}:`, error);
+    console.error(`Error adding skills for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to add skills or interests" },
+      { error: "Failed to add skills" },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -256,12 +256,9 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(
-      `Error removing skill/interest for user ${params.userId}:`,
-      error
-    );
+    console.error(`Error removing skill/interest for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to remove skill or interest" },
+      { error: "Failed to remove skill/interest" },
       { status: 500, headers: corsHeaders }
     );
   }

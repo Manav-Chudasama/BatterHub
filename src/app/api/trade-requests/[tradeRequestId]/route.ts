@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import connectToDatabase from "@/lib/mongodb";
 import mongoose from "mongoose";
 import TradeRequest from "@/models/TradeRequest";
 import Listing from "@/models/Listing";
+import Message from "@/models/Message";
 
 // CORS headers
 const corsHeaders = {
@@ -38,8 +39,8 @@ export async function GET(
   { params }: { params: { tradeRequestId: string } }
 ) {
   try {
-    const { tradeRequestId } = await params;
-    const { userId } = getAuth(request);
+    const { tradeRequestId } = params;
+    const { userId } = await auth();
 
     // Check authentication
     if (!userId) {
@@ -113,8 +114,8 @@ export async function PUT(
   { params }: { params: { tradeRequestId: string } }
 ) {
   try {
-    const { tradeRequestId } = await params;
-    const { userId } = getAuth(request);
+    const { tradeRequestId } = params;
+    const { userId } = await auth();
 
     // Check authentication
     if (!userId) {
@@ -179,18 +180,68 @@ export async function PUT(
         { status: 403, headers: corsHeaders }
       );
     }
-
+    console.log(message);
     // Add message if provided
     if (message) {
-      tradeRequest.messages.push({
-        from: userId,
-        content: message,
-        timestamp: new Date(),
-      });
+      try {
+        tradeRequest.messages.push({
+          from: userId,
+          content: message,
+          timestamp: new Date(),
+        });
+      } catch (messageError) {
+        console.error("Error adding message to trade request:", messageError);
+        // Continue processing even if adding message fails
+      }
     }
 
     // Update status
     tradeRequest.status = status;
+
+    // If status is 'accepted', create or update the chat between users
+    if (status === "accepted") {
+      try {
+        // Check if chat already exists
+        let chat = await Message.findOne({
+          $or: [
+            { offeredTrade: tradeRequestId },
+            { requestedTrade: tradeRequestId },
+          ],
+          participants: {
+            $all: [tradeRequest.fromUserId, tradeRequest.toUserId],
+          },
+        });
+        console.log(userId);
+
+        // If no chat exists, create one
+        if (!chat) {
+          const welcomeMessage =
+            "Trade request accepted! You can now chat with each other about the details of your trade.";
+
+          chat = new Message({
+            participants: [tradeRequest.fromUserId, tradeRequest.toUserId],
+            offeredTrade: tradeRequest._id,
+            requestedTrade: tradeRequest._id,
+            messages: [
+              {
+                sender: userId,
+                text: welcomeMessage,
+                createdAt: new Date(),
+                isRead: false,
+              },
+            ],
+          });
+
+          await chat.save();
+          console.log(
+            `Created new chat (${chat._id}) for trade request ${tradeRequestId}`
+          );
+        }
+      } catch (chatError) {
+        console.error("Error creating chat:", chatError);
+        // Continue processing even if chat creation fails
+      }
+    }
 
     // If status is 'completed', update both listings to 'traded'
     if (status === "completed") {
@@ -206,12 +257,35 @@ export async function PUT(
       }
     }
 
-    await tradeRequest.save();
+    try {
+      await tradeRequest.save();
 
-    return NextResponse.json(
-      { message: "Trade request updated successfully", tradeRequest },
-      { headers: corsHeaders }
-    );
+      return NextResponse.json(
+        { message: "Trade request updated successfully", tradeRequest },
+        { headers: corsHeaders }
+      );
+    } catch (saveError) {
+      console.error("Error saving trade request:", saveError);
+
+      // Try to save without messages if there was an error
+      if (message) {
+        // Remove the last message that was added
+        tradeRequest.messages.pop();
+        await tradeRequest.save();
+        return NextResponse.json(
+          {
+            message: "Trade request status updated, but could not save message",
+            tradeRequest,
+          },
+          { headers: corsHeaders }
+        );
+      }
+
+      return NextResponse.json(
+        { error: "Failed to update trade request" },
+        { status: 500, headers: corsHeaders }
+      );
+    }
   } catch (error) {
     console.error("Error updating trade request:", error);
     return NextResponse.json(

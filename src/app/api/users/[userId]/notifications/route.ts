@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
 import mongoose from "mongoose";
+import { getAuth } from "@/lib/auth";
 
 // CORS headers
 const corsHeaders = {
@@ -37,6 +38,7 @@ export async function GET(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const { searchParams } = new URL(request.url);
 
     // Pagination parameters
@@ -104,7 +106,7 @@ export async function GET(
     );
   } catch (error) {
     console.error(
-      `Error fetching notifications for user ${params.userId}:`,
+      `Error fetching notifications for user ${userId}:`,
       error
     );
     return NextResponse.json(
@@ -124,6 +126,7 @@ export async function POST(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const body = await request.json();
     const { message, type, linkUrl, itemId } = body;
 
@@ -168,7 +171,7 @@ export async function POST(
     });
   } catch (error) {
     console.error(
-      `Error adding notification for user ${params.userId}:`,
+      `Error adding notification for user ${userId}:`,
       error
     );
     return NextResponse.json(
@@ -188,6 +191,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -254,7 +258,7 @@ export async function PUT(
     );
   } catch (error) {
     console.error(
-      `Error updating notifications for user ${params.userId}:`,
+      `Error updating notifications for user ${userId}:`,
       error
     );
     return NextResponse.json(
@@ -270,10 +274,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string; notificationId?: string } }
+  { params }: { params: { userId: string } }
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const url = new URL(request.url);
     const pathParts = url.pathname.split("/");
     const notificationId = pathParts[pathParts.length - 1];
@@ -315,7 +320,7 @@ export async function DELETE(
     );
   } catch (error) {
     console.error(
-      `Error deleting notification for user ${params.userId}:`,
+      `Error deleting notification for user ${userId}:`,
       error
     );
     return NextResponse.json(

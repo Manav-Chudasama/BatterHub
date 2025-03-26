@@ -36,6 +36,7 @@ export async function GET(
 ) {
   try {
     const { userId } = params;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
+import { getAuth } from "@/lib/auth";
 
 // CORS headers
 const corsHeaders = {
@@ -36,6 +37,7 @@ export async function GET(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
 
     await connectToDatabase();
 
@@ -51,10 +53,7 @@ export async function GET(
     // Return preferences or default empty object
     return NextResponse.json(user.preferences || {}, { headers: corsHeaders });
   } catch (error) {
-    console.error(
-      `Error fetching preferences for user ${params.userId}:`,
-      error
-    );
+    console.error(`Error fetching preferences for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch preferences" },
       { status: 500, headers: corsHeaders }
@@ -72,6 +71,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const preferences = await request.json();
 
     // Validate the request body
@@ -137,10 +137,7 @@ export async function PUT(
 
     return NextResponse.json(updatedUser.preferences, { headers: corsHeaders });
   } catch (error) {
-    console.error(
-      `Error updating preferences for user ${params.userId}:`,
-      error
-    );
+    console.error(`Error updating preferences for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update preferences" },
       { status: 500, headers: corsHeaders }

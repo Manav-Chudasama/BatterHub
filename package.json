@@ -2,16 +2,18 @@
   "name": "batterhub",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "ts-node --project tsconfig.server.json src/server.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production ts-node --project tsconfig.server.json src/server.ts",
     "lint": "next lint"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.4",
     "@types/uuid": "^10.0.0",
     "cloudinary": "^2.6.0",
+    "cross-env": "^7.0.3",
     "framer-motion": "^12.4.10",
     "lottie-react": "^2.4.1",
     "mongoose": "^8.12.1",
@@ -21,6 +23,8 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
     "svix": "^1.62.0",
     "uuid": "^11.1.0"
   },
@@ -34,6 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

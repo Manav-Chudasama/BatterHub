@@ -59,10 +59,7 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(
-      `Error fetching saved listings for user ${params.userId}:`,
-      error
-    );
+    console.error(`Error fetching saved listings for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch saved listings" },
       { status: 500, headers: corsHeaders }
@@ -124,7 +121,7 @@ export async function POST(
       );
     }
   } catch (error) {
-    console.error(`Error saving listing for user ${params.userId}:`, error);
+    console.error(`Error saving listing for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to save listing" },
       { status: 500, headers: corsHeaders }
@@ -187,10 +184,7 @@ export async function DELETE(
       );
     }
   } catch (error) {
-    console.error(
-      `Error removing saved listing for user ${params.userId}:`,
-      error
-    );
+    console.error(`Error removing saved listing for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to remove saved listing" },
       { status: 500, headers: corsHeaders }

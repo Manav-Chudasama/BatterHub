@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
+import { getAuth } from "@/lib/auth";
 
 // CORS headers
 const corsHeaders = {
@@ -36,6 +37,7 @@ export async function GET(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
 
     await connectToDatabase();
 
@@ -51,9 +53,9 @@ export async function GET(
     // Return location data or default empty object
     return NextResponse.json(user.location || {}, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error fetching location for user ${params.userId}:`, error);
+    console.error(`Error fetching location for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to fetch location data" },
+      { error: "Failed to fetch location" },
       { status: 500, headers: corsHeaders }
     );
   }
@@ -69,6 +71,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = params;
+    const { auth } = getAuth(request);
     const locationData = await request.json();
 
     // Validate the request body
@@ -167,9 +170,9 @@ export async function PUT(
 
     return NextResponse.json(updatedUser.location, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error updating location for user ${params.userId}:`, error);
+    console.error(`Error updating location for user ${userId}:`, error);
     return NextResponse.json(
-      { error: "Failed to update location data" },
+      { error: "Failed to update location" },
       { status: 500, headers: corsHeaders }
     );
   }

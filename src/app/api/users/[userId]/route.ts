@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
+import { getAuth } from "@/lib/auth";
 
 // CORS headers
 const corsHeaders = {
@@ -35,7 +36,8 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = await params;
+    const { userId } = params;
+    const { auth } = getAuth(request);
     await connectToDatabase();
 
     const user = await User.findOne({ userId }).select("-password");
@@ -49,7 +51,7 @@ export async function GET(
 
     return NextResponse.json(user, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error fetching user ${params.userId}:`, error);
+    console.error(`Error fetching user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500, headers: corsHeaders }
@@ -66,7 +68,8 @@ export async function PUT(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = await params;
+    const { userId } = params;
+    const { auth } = getAuth(request);
     const body = await request.json();
 
     await connectToDatabase();
@@ -92,7 +95,7 @@ export async function PUT(
 
     return NextResponse.json(user, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error updating user ${params.userId}:`, error);
+    console.error(`Error updating user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500, headers: corsHeaders }
@@ -109,7 +112,8 @@ export async function DELETE(
   { params }: { params: { userId: string } }
 ) {
   try {
-    const { userId } = await params;
+    const { userId } = params;
+    const { auth } = getAuth(request);
 
     await connectToDatabase();
 
@@ -127,7 +131,7 @@ export async function DELETE(
       { status: 200, headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error deleting user ${params.userId}:`, error);
+    console.error(`Error deleting user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500, headers: corsHeaders }

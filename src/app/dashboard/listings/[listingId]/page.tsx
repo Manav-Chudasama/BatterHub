@@ -64,13 +64,14 @@ export default function ListingDetailPage({
   const [newStatus, setNewStatus] = useState<string | null>(null);
   const isOwner = user && listing?.userId === user.id;
 
+  const { listingId } = params;
   useEffect(() => {
     const fetchListing = async () => {
       setIsLoading(true);
       setError("");
 
       try {
-        const response = await fetch(`/api/listings/${params.listingId}`);
+        const response = await fetch(`/api/listings/${listingId}`);
 
         if (!response.ok) {
           throw new Error(
@@ -94,10 +95,10 @@ export default function ListingDetailPage({
       }
     };
 
-    if (params.listingId) {
+    if (listingId) {
       fetchListing();
     }
-  }, [params.listingId]);
+  }, [listingId]);
 
   // Handle showing status modal
   const handleShowStatusModal = (status: string) => {
