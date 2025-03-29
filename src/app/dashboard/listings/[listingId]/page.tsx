@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import React from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TradeRequestModal from "@/components/TradeRequestModal";
+import SaveButton from "@/components/SaveButton";
 import { motion } from "framer-motion";
 import {
   RiEditLine,
@@ -37,6 +38,7 @@ interface Listing {
   views: number;
   tradeRequests: string[];
   availability: string[];
+  savedBy: string[];
   user: {
     name: string;
     location?: {
@@ -50,7 +52,7 @@ interface Listing {
 export default function ListingDetailPage({
   params,
 }: {
-  params: { listingId: string };
+  params: Promise<{ listingId: string }>;
 }) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
@@ -62,7 +64,9 @@ export default function ListingDetailPage({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const isOwner = user && listing?.userId === user.id;
+  const { listingId } = use(params);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -70,7 +74,7 @@ export default function ListingDetailPage({
       setError("");
 
       try {
-        const response = await fetch(`/api/listings/${params.listingId}`);
+        const response = await fetch(`/api/listings/${listingId}`);
 
         if (!response.ok) {
           throw new Error(
@@ -82,6 +86,11 @@ export default function ListingDetailPage({
 
         const data = await response.json();
         setListing(data.listing);
+
+        // Check if this listing is already saved by the user
+        if (user && data.listing.savedBy) {
+          setIsSaved(data.listing.savedBy.includes(user.id));
+        }
       } catch (err) {
         console.error("Error fetching listing:", err);
         setError(
@@ -94,10 +103,10 @@ export default function ListingDetailPage({
       }
     };
 
-    if (params.listingId) {
+    if (listingId) {
       fetchListing();
     }
-  }, [params.listingId]);
+  }, [listingId, user]);
 
   // Handle showing status modal
   const handleShowStatusModal = (status: string) => {
@@ -443,11 +452,22 @@ export default function ListingDetailPage({
               transition={{ delay: 0.1 }}
               className="bg-white dark:bg-black border border-black/[.08] dark:border-white/[.08] rounded-lg p-6"
             >
-              <div className="mb-4">
-                <span className="inline-block px-3 py-1 text-xs rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 mb-3">
-                  {listing.category}
-                </span>
-                <h1 className="text-2xl font-bold">{listing.title}</h1>
+              <div className="mb-4 flex justify-between items-start">
+                <div>
+                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500 mb-3">
+                    {listing.category}
+                  </span>
+                  <h1 className="text-2xl font-bold">{listing.title}</h1>
+                </div>
+
+                {/* Save button for non-owners */}
+                {!isOwner && user && (
+                  <SaveButton
+                    listingId={listing._id}
+                    initialSaved={isSaved}
+                    onSaveChange={(saved) => setIsSaved(saved)}
+                  />
+                )}
               </div>
 
               <div className="mb-6">

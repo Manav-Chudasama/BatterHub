@@ -16,6 +16,7 @@ import {
   RiAddCircleLine,
   RiFileListLine,
   RiExchangeLine,
+  RiBookmarkLine,
 } from "react-icons/ri";
 import { useState } from "react";
 import { UserButton } from "@clerk/nextjs";
@@ -46,6 +47,11 @@ const sidebarLinks = [
     label: "Trade Requests",
     href: "/dashboard/trade-requests",
     badge: 2,
+  },
+  {
+    icon: RiBookmarkLine,
+    label: "Saved Listings",
+    href: "/dashboard/listings/saved",
   },
   {
     icon: RiMessage2Line,

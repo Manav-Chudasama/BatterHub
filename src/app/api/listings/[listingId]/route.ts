@@ -52,6 +52,7 @@ export async function GET(
     // Find the listing and populate user data
     const listing = await Listing.findById(listingId)
       .populate("user", "name profilePicture location")
+      .populate("savedBy", "userId")
       .lean();
 
     if (!listing) {
@@ -63,6 +64,12 @@ export async function GET(
 
     // Increment view count
     await Listing.findByIdAndUpdate(listingId, { $inc: { views: 1 } });
+
+    // Format the savedBy array to just include the user IDs to simplify client-side checking
+    if (listing.savedBy) {
+      // @ts-expect-error - we know savedBy has userId after population
+      listing.savedBy = listing.savedBy.map((user) => user.userId);
+    }
 
     return NextResponse.json({ listing }, { headers: corsHeaders });
   } catch (error) {

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
+import mongoose from "mongoose";
+
+// We still need these imports to ensure the models are registered
+import "@/models/Listing";
+import "@/models/TradeRequest";
 
 // CORS headers
 const corsHeaders = {
@@ -32,13 +37,54 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
-    const { userId } = await params;
     await connectToDatabase();
 
-    const user = await User.findOne({ userId }).select("-password");
+    // Ensure all models are loaded
+    try {
+      // Load all required models first to prevent errors
+      await Promise.all([
+        mongoose.model("User"),
+        mongoose.model("Listing"),
+        mongoose.model("TradeRequest"),
+      ]).catch(() => {
+        // If any model isn't registered yet, the models will be imported
+        // from their respective files automatically through the imports
+        console.log("Models being registered...");
+      });
+    } catch (err) {
+      console.log("Error pre-loading models:", err);
+    }
+
+    // Now perform the query with population
+    const user = await User.findOne({ userId })
+      .select("-password")
+      .populate({
+        path: "savedListings",
+        select: "_id title images category createdAt",
+        model: "Listing",
+      })
+      .populate({
+        path: "tradeHistory",
+        select:
+          "_id fromUserId toUserId status type fromListing toListing createdAt",
+        model: "TradeRequest",
+        populate: [
+          {
+            path: "fromListing",
+            select: "_id title images",
+            model: "Listing",
+          },
+          {
+            path: "toListing",
+            select: "_id title images",
+            model: "Listing",
+          },
+        ],
+      });
 
     if (!user) {
       return NextResponse.json(
@@ -49,7 +95,7 @@ export async function GET(
 
     return NextResponse.json(user, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error fetching user ${params.userId}:`, error);
+    console.error(`Error fetching user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500, headers: corsHeaders }
@@ -63,10 +109,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
-    const { userId } = await params;
     const body = await request.json();
 
     await connectToDatabase();
@@ -92,7 +138,7 @@ export async function PUT(
 
     return NextResponse.json(user, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error updating user ${params.userId}:`, error);
+    console.error(`Error updating user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500, headers: corsHeaders }
@@ -106,11 +152,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   try {
-    const { userId } = await params;
-
     await connectToDatabase();
 
     const user = await User.findOneAndDelete({ userId });
@@ -127,7 +172,7 @@ export async function DELETE(
       { status: 200, headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error deleting user ${params.userId}:`, error);
+    console.error(`Error deleting user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500, headers: corsHeaders }

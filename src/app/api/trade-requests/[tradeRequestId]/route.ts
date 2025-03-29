@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/mongodb";
 import mongoose from "mongoose";
 import TradeRequest from "@/models/TradeRequest";
 import Listing from "@/models/Listing";
+import User from "@/models/User";
 
 // CORS headers
 const corsHeaders = {
@@ -204,6 +205,17 @@ export async function PUT(
           status: "traded",
         });
       }
+
+      // Add trade to both users' trade history
+      await User.findOneAndUpdate(
+        { userId: tradeRequest.fromUserId },
+        { $addToSet: { tradeHistory: tradeRequest._id } }
+      );
+
+      await User.findOneAndUpdate(
+        { userId: tradeRequest.toUserId },
+        { $addToSet: { tradeHistory: tradeRequest._id } }
+      );
     }
 
     await tradeRequest.save();

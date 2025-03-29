@@ -86,7 +86,7 @@ const UserSchema = new Schema<IUser, IUserModel>(
       postalCode: { type: String },
     }, // GeoJSON for location data
     reputationScore: { type: Number, default: 0 }, // Based on trade ratings
-    tradeHistory: [{ type: Schema.Types.ObjectId, ref: "Trade" }], // Past trades
+    tradeHistory: [{ type: Schema.Types.ObjectId, ref: "TradeRequest" }], // Past trades
     savedListings: [{ type: Schema.Types.ObjectId, ref: "Listing" }], // Bookmarked items
     notifications: [
       {
@@ -127,7 +127,6 @@ const UserSchema = new Schema<IUser, IUserModel>(
 );
 
 // Create indexes for better query performance
-UserSchema.index({ email: 1 });
 UserSchema.index({ userId: 1 });
 UserSchema.index({ "location.coordinates": "2dsphere" }); // Geospatial index for location-based queries
 UserSchema.index({ skills: 1 });

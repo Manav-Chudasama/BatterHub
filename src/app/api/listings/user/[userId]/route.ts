@@ -32,10 +32,11 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    console.log("params", params);
+    const { userId } = await params;
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
@@ -51,7 +52,6 @@ export async function GET(
 
     // Find all listings for the user
     const listings = await Listing.find(query).sort({ createdAt: -1 }).lean();
-
     return NextResponse.json(
       {
         listings,

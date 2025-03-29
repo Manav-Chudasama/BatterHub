@@ -4,7 +4,7 @@ import connectToDatabase from "@/lib/mongodb";
 import mongoose from "mongoose";
 import TradeRequest from "@/models/TradeRequest";
 import Listing from "@/models/Listing";
-
+import User from "@/models/User";
 // CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,6 +236,12 @@ export async function POST(request: NextRequest) {
         $push: { tradeRequests: tradeRequest._id },
       });
     }
+
+    // Update the user's trade history
+    await User.findOneAndUpdate(
+      { userId: userId },
+      { $addToSet: { tradeHistory: tradeRequest._id } }
+    );
 
     return NextResponse.json(
       {
