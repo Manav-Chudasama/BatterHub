@@ -43,7 +43,17 @@ export async function GET(
     // Find the user and populate their saved listings
     const user = await User.findOne({ userId })
       .select("savedListings")
-      .populate("savedListings");
+      .populate({
+        path: "savedListings",
+        model: "Listing",
+        select:
+          "_id title description category images status userId createdAt updatedAt tradePreferences views tradeRequests availability user",
+        populate: {
+          path: "user",
+          model: "User",
+          select: "name profilePicture location",
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
@@ -118,6 +128,7 @@ export async function POST(
       );
     } catch (err) {
       // Handle invalid ObjectId format
+      console.error(`Error saving listing for user ${params.userId}:`, err);
       return NextResponse.json(
         { error: "Invalid listing ID format" },
         { status: 400, headers: corsHeaders }
@@ -181,6 +192,7 @@ export async function DELETE(
       );
     } catch (err) {
       // Handle invalid ObjectId format
+      console.error(`Error removing saved listing for user ${params.userId}:`, err);
       return NextResponse.json(
         { error: "Invalid listing ID format" },
         { status: 400, headers: corsHeaders }

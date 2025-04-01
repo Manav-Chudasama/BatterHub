@@ -34,10 +34,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const auth = getAuth(request);
 
     // Ensure that the authenticated user is requesting their own stats
@@ -51,7 +51,7 @@ export async function GET(
     await connectToDatabase();
 
     // Find the user
-    const user = await User.findOne({ userId }).select("_id");
+    const user = await User.findOne({ userId }).select("_id reputationScore");
 
     if (!user) {
       return NextResponse.json(
@@ -62,8 +62,9 @@ export async function GET(
 
     // Get all trade requests for this user
     const tradeRequests = await TradeRequest.find({
-      $or: [{ fromUser: user._id }, { toUser: user._id }],
+      $or: [{ fromUser: user.userId }, { toUser: user.userId }],
     });
+    console.log("tradeRequests: ", tradeRequests);
 
     // Calculate stats
     const activeTradeRequests = tradeRequests.filter(
@@ -74,21 +75,14 @@ export async function GET(
       (req) => req.status === "completed"
     ).length;
 
-    // Calculate success rate (completed trades / all trades with a final status)
-    const finalizedTrades = tradeRequests.filter((req) =>
-      ["completed", "rejected", "canceled"].includes(req.status)
-    ).length;
-
-    const successRate =
-      finalizedTrades > 0
-        ? Math.round((completedTrades / finalizedTrades) * 100)
-        : 100; // Default to 100% if no trades yet
+    console.log("activeTradeRequests: ", activeTradeRequests);
+    console.log("completedTrades: ", completedTrades);
 
     return NextResponse.json(
       {
         activeTradeRequests,
         completedTrades,
-        successRate,
+        reputationScore: user.reputationScore || 0,
       },
       { headers: corsHeaders }
     );

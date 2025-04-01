@@ -64,8 +64,12 @@ export async function GET(
       .select("-password")
       .populate({
         path: "savedListings",
-        select: "_id title images category createdAt",
         model: "Listing",
+        populate: {
+          path: "user",
+          model: "User",
+          select: "name profilePicture",
+        },
       })
       .populate({
         path: "tradeHistory",

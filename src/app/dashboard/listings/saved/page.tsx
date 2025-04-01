@@ -82,6 +82,7 @@ export default function SavedListingsPage() {
 
   // Filter listings based on search query
   const filteredListings = savedListings.filter((listing) => {
+    console.log("listing", listing);
     if (searchQuery === "") return true;
     return (
       listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

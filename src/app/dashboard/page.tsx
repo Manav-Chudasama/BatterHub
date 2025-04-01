@@ -10,7 +10,6 @@ import {
   RiAddCircleLine,
   RiSearchLine,
   RiMessage3Line,
-  RiLoader4Line,
   RiArrowRightLine,
 } from "react-icons/ri";
 
@@ -41,31 +40,7 @@ const quickActions = [
 interface DashboardStats {
   activeTradeRequests: number;
   completedTrades: number;
-  successRate: number;
-}
-
-interface TradeRequest {
-  _id: string;
-  status: string;
-  fromUser: {
-    _id: string;
-    name: string;
-    profilePicture?: string;
-  };
-  fromListing: {
-    _id: string;
-    title: string;
-  };
-  toUser: {
-    _id: string;
-    name: string;
-    profilePicture?: string;
-  };
-  toListing: {
-    _id: string;
-    title: string;
-  };
-  createdAt: string;
+  reputationScore: number;
 }
 
 interface Listing {
@@ -89,16 +64,19 @@ interface Listing {
 
 interface Activity {
   id: string;
-  type: "trade_request" | "trade_completed" | "new_message" | "new_review";
-  user: {
+  type: "trade" | "system";
+  message: string;
+  date: string;
+  // Keeping these properties for backward compatibility
+  user?: {
     name: string;
     profilePicture?: string;
   };
-  action: string;
-  item: string;
+  action?: string;
+  item?: string;
   itemId?: string;
-  time: string;
-  status: string;
+  time?: string;
+  status?: string;
 }
 
 export default function Dashboard() {
@@ -109,22 +87,53 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     activeTradeRequests: 0,
     completedTrades: 0,
-    successRate: 0,
+    reputationScore: 0,
   });
   const [recommendedListings, setRecommendedListings] = useState<Listing[]>([]);
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(true);
   const [recommendedLoading, setRecommendedLoading] = useState(true);
+  const [reviews, setReviews] = useState<{ rating: number }[]>([]);
 
   // Fetch dashboard stats
   useEffect(() => {
     if (isLoaded && user) {
       fetchDashboardStats();
+      fetchUserReviews();
       fetchRecommendedListings();
       fetchRecentActivity();
     }
   }, [isLoaded, user]);
+
+  const fetchUserReviews = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(`/api/reviews?reviewedUserId=${user.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch user reviews");
+      }
+      const data = await response.json();
+      setReviews(data.reviews || []);
+
+      // Calculate average rating
+      if (data.reviews && data.reviews.length > 0) {
+        const totalRating = data.reviews.reduce(
+          (sum: number, review: { rating: number }) => sum + review.rating,
+          0
+        );
+        const averageRating = totalRating / data.reviews.length;
+        // Update reputation score with the average rating (scaled to 100)
+        setStats((prevStats) => ({
+          ...prevStats,
+          reputationScore: Math.round(averageRating * 20), // 5 stars = 100%
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -136,10 +145,11 @@ export default function Dashboard() {
       }
 
       const data = await response.json();
+      console.log(data);
       setStats({
         activeTradeRequests: data.activeTradeRequests || 0,
         completedTrades: data.completedTrades || 0,
-        successRate: data.successRate || 0,
+        reputationScore: data.reputationScore || 0,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -184,33 +194,6 @@ export default function Dashboard() {
     }
   };
 
-  // Calculate percentage match (placeholder logic - you'd implement proper matching algorithm)
-  const calculateMatch = (listing: Listing) => {
-    // This would be replaced with actual matching logic
-    const match = Math.floor(Math.random() * 16) + 80; // Random number between 80-95
-    return `${match}%`;
-  };
-
-  // Format relative time
-  const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return "just now";
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    } else {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days > 1 ? "s" : ""} ago`;
-    }
-  };
-
   // Redirect if not authenticated
   if (isLoaded && !user) {
     router.push("/");
@@ -236,7 +219,7 @@ export default function Dashboard() {
             </p>
             {isLoading ? (
               <div className="grid grid-cols-3 gap-3 lg:gap-4">
-                {[1, 2, 3].map((i) => (
+                {[1, 2].map((i) => (
                   <div
                     key={i}
                     className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02] animate-pulse"
@@ -245,6 +228,17 @@ export default function Dashboard() {
                     <div className="h-4 w-20 bg-black/[.05] dark:bg-white/[.05] rounded"></div>
                   </div>
                 ))}
+                <div className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02] animate-pulse">
+                  <div className="flex mb-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={i}
+                        className="w-5 h-5 mr-1 bg-black/[.05] dark:bg-white/[.05] rounded-full"
+                      ></div>
+                    ))}
+                  </div>
+                  <div className="h-4 w-20 bg-black/[.05] dark:bg-white/[.05] rounded"></div>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
@@ -265,11 +259,32 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02]">
-                  <div className="text-xl lg:text-2xl font-bold mb-1">
-                    {stats.successRate}%
+                  <div className="flex items-center mb-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i <
+                          Math.min(5, Math.round(stats.reputationScore / 20))
+                            ? "text-yellow-400"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 22 20"
+                      >
+                        <path d="M20.924 7.625a1.523 1.523 0 0 0-1.238-1.044l-5.051-.734-2.259-4.577a1.534 1.534 0 0 0-2.752 0L7.365 5.847l-5.051.734A1.535 1.535 0 0 0 1.463 9.2l3.656 3.563-.863 5.031a1.532 1.532 0 0 0 2.226 1.616L11 17.033l4.518 2.375a1.534 1.534 0 0 0 2.226-1.617l-.863-5.03L20.537 9.2a1.523 1.523 0 0 0 .387-1.575Z" />
+                      </svg>
+                    ))}
+                    {reviews.length > 0 && (
+                      <span className="ml-2 text-xs text-black/60 dark:text-white/60">
+                        ({reviews.length})
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-black/60 dark:text-white/60">
-                    Success Rate
+                    Reputation
                   </div>
                 </div>
               </div>
@@ -391,7 +406,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <span className="text-emerald-600 dark:text-emerald-500 text-sm font-medium">
-                      {calculateMatch(listing)} Match
+                      100% Match
                     </span>
                   </div>
                   <h3 className="font-semibold mb-2">{listing.title}</h3>
@@ -423,91 +438,46 @@ export default function Dashboard() {
           <h3 className="font-semibold mb-4">Recent Activity</h3>
 
           {activityLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center space-x-3 lg:space-x-4 p-3 lg:p-4 rounded-lg bg-black/[.02] dark:bg-white/[.02] animate-pulse"
-                >
-                  <div className="w-10 h-10 rounded-full bg-black/[.05] dark:bg-white/[.05]"></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="h-4 w-3/4 bg-black/[.05] dark:bg-white/[.05] rounded mb-2"></div>
-                    <div className="h-3 w-1/4 bg-black/[.05] dark:bg-white/[.05] rounded"></div>
+            <div className="animate-pulse">
+              <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded mb-4"></div>
+              <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded mb-4"></div>
+            </div>
+          ) : recentActivity.length > 0 ? (
+            recentActivity.map((activity, index) => (
+              <div
+                key={index}
+                className="mb-4 p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                      {activity.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(activity.date).toLocaleDateString()} at{" "}
+                      {new Date(activity.date).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
-                  <div className="h-5 w-16 bg-black/[.05] dark:bg-white/[.05] rounded"></div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      activity.type === "trade"
+                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                    }`}
+                  >
+                    {activity.type === "trade" ? "Trade" : "System"}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : recentActivity.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-black/60 dark:text-white/60">
-                No recent activity to display. Start trading or messaging to see
-                activity here.
-              </p>
-            </div>
+              </div>
+            ))
           ) : (
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-center space-x-3 lg:space-x-4 p-3 lg:p-4 rounded-lg hover:bg-black/[.02] dark:hover:bg-white/[.02] transition-colors cursor-pointer"
-                  onClick={() => {
-                    if (
-                      activity.type === "trade_request" ||
-                      activity.type === "trade_completed"
-                    ) {
-                      router.push(
-                        `/dashboard/trade-requests?id=${activity.itemId}`
-                      );
-                    } else if (activity.type === "new_message") {
-                      router.push("/dashboard/messages");
-                    } else if (activity.type === "new_review") {
-                      router.push(`/dashboard/profile?tab=reviews`);
-                    }
-                  }}
-                >
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    {activity.user?.profilePicture ? (
-                      <img
-                        src={activity.user.profilePicture}
-                        alt={activity.user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        {activity.user?.name?.charAt(0) || "?"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.user.name}</span>{" "}
-                      {activity.action}{" "}
-                      <span className="font-medium">{activity.item}</span>
-                    </p>
-                    <p className="text-xs text-black/60 dark:text-white/60">
-                      {activity.time}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    {activity.status === "pending" && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Pending
-                      </span>
-                    )}
-                    {activity.status === "completed" && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Completed
-                      </span>
-                    )}
-                    {activity.status === "unread" && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Unread
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
+                No recent activity
+              </p>
             </div>
           )}
         </motion.div>

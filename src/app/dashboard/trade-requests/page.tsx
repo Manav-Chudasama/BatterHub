@@ -270,6 +270,7 @@ export default function TradeRequestsPage() {
       };
 
       setTradeRequests(mappedRequests);
+      console.log("mappedRequests: ", mappedRequests);
       setStats(newStats);
 
       // Check for completed trades and fetch reviews
@@ -612,6 +613,7 @@ export default function TradeRequestsPage() {
                 );
               })
               .map((request) => {
+                console.log("request: ", request);
                 // Determine other user name based on trade direction
                 const otherUserName =
                   request.type === "sent"
@@ -649,8 +651,14 @@ export default function TradeRequestsPage() {
                                 : "bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
                             }`}
                           >
-                            {request.status.charAt(0).toUpperCase() +
-                              request.status.slice(1)}
+                            {request.status === "countered"
+                              ? request.messages.length > 0 &&
+                                request.messages[request.messages.length - 1]
+                                  .from === user?.id
+                                ? "Waiting for Response"
+                                : "Counter Offer Received"
+                              : request.status.charAt(0).toUpperCase() +
+                                request.status.slice(1)}
                           </span>
                           {request.status === "completed" && (
                             <>
@@ -685,8 +693,14 @@ export default function TradeRequestsPage() {
                         <div className="grid sm:grid-cols-2 gap-4 mb-4">
                           <div className="bg-black/[.02] dark:bg-white/[.02] p-3 rounded-lg">
                             <div className="font-medium mb-1">
-                              You{" "}
-                              {request.type === "sent" ? "offer" : "receive"}
+                              {request.type === "sent"
+                                ? "You offer"
+                                : "They are requesting"}
+                              {request.status === "countered" &&
+                                request.messages.length > 0 &&
+                                request.messages[request.messages.length - 1]
+                                  .from !== user?.id &&
+                                " (countered)"}
                             </div>
                             <div>
                               {request.type === "sent"
@@ -730,8 +744,12 @@ export default function TradeRequestsPage() {
 
                           <div className="bg-black/[.02] dark:bg-white/[.02] p-3 rounded-lg">
                             <div className="font-medium mb-1">
-                              You{" "}
-                              {request.type === "sent" ? "receive" : "offer"}
+                              You receive
+                              {request.status === "countered" &&
+                                request.messages.length > 0 &&
+                                request.messages[request.messages.length - 1]
+                                  .from !== user?.id &&
+                                " (countered)"}
                             </div>
                             <div>
                               {request.type === "sent"
@@ -850,6 +868,48 @@ export default function TradeRequestsPage() {
                               >
                                 <RiExchangeLine />
                                 Counter
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(request._id, "rejected")
+                                }
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm justify-center"
+                              >
+                                <RiCloseLine />
+                                Decline
+                              </button>
+                            </>
+                          )}
+
+                        {/* For countered requests, only show accept/counter buttons to the recipient of the counter */}
+                        {request.status === "countered" &&
+                          ((request.type === "sent" &&
+                            request.messages.length > 0 &&
+                            request.messages[request.messages.length - 1]
+                              .from !== user?.id) ||
+                            (request.type === "received" &&
+                              request.messages.length > 0 &&
+                              request.messages[request.messages.length - 1]
+                                .from !== user?.id)) && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusChange(request._id, "accepted")
+                                }
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
+                              >
+                                <RiCheckLine />
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedRequest(request._id);
+                                  setShowCounterModal(true);
+                                }}
+                                className="flex items-center gap-1 px-3 py-1.5 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm justify-center"
+                              >
+                                <RiExchangeLine />
+                                Counter Again
                               </button>
                               <button
                                 onClick={() =>

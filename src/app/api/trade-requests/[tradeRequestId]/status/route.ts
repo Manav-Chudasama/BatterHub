@@ -19,7 +19,7 @@ export async function OPTIONS() {
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { tradeRequestId: string } }
+  { params }: { params: Promise<{ tradeRequestId: string }> }
 ) {
   try {
     // Get the authenticated user
@@ -33,7 +33,7 @@ export async function PUT(
 
     await connectToDatabase();
 
-    const { tradeRequestId } = params;
+    const { tradeRequestId } = await params;
     if (!tradeRequestId) {
       return NextResponse.json(
         { error: "Trade request ID is required" },
@@ -70,7 +70,7 @@ export async function PUT(
     // If there's a message, add it to the messages array
     if (message) {
       tradeRequest.messages.push({
-        sender: userId,
+        from: userId,
         content: message,
         timestamp: new Date(),
       });

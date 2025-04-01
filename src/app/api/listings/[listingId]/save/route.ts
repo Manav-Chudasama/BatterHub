@@ -65,19 +65,21 @@ export async function POST(
       );
     }
 
-    // Add the listing to the user's savedListings
-    const user = await User.findOneAndUpdate(
-      { userId },
-      { $addToSet: { savedListings: listingId } },
-      { new: true }
-    );
-
+    // Find the user in our database
+    const user = await User.findOne({ userId });
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404, headers: corsHeaders }
       );
     }
+
+    // Add the listing to the user's savedListings
+    await User.findOneAndUpdate(
+      { userId },
+      { $addToSet: { savedListings: listingId } },
+      { new: true }
+    );
 
     // Add the user to the listing's savedBy
     await Listing.findByIdAndUpdate(listingId, {

@@ -44,12 +44,21 @@ interface UserProfile {
     images?: string[];
     category: string;
     createdAt: string;
+    userId: string;
+    user?: {
+      _id: string;
+      name: string;
+      profilePicture?: string;
+      userId: string;
+    };
   }>;
   tradeHistory?: Array<{
     _id: string;
     type: "sent" | "received";
     status: string;
     createdAt: string;
+    fromUserId: string;
+    toUserId: string;
     fromListing?: {
       _id: string;
       title: string;
@@ -120,7 +129,17 @@ export default function ProfilePage() {
         throw new Error("Failed to fetch user profile");
       }
       const data = await response.json();
+
       setUserProfile(data);
+      console.log("userProfile: ", data);
+
+      // Log saved listings for debugging
+      if (data.savedListings) {
+        console.log("Saved listings count:", data.savedListings.length);
+        if (data.savedListings.length > 0) {
+          console.log("First saved listing:", data.savedListings[0]);
+        }
+      }
 
       // Set initial form data
       setFormData({
@@ -734,6 +753,25 @@ export default function ProfilePage() {
                               {new Date(listing.createdAt).toLocaleDateString()}
                             </span>
                           </div>
+                          <div className="flex items-center mt-2 pt-2 border-t border-black/[.05] dark:border-white/[.05]">
+                            <div className="relative h-5 w-5 rounded-full overflow-hidden bg-emerald-100 dark:bg-emerald-900/20 mr-2">
+                              {listing.user?.profilePicture ? (
+                                <Image
+                                  src={listing.user.profilePicture}
+                                  alt={listing.user.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                                  {listing.user?.name?.[0] || "?"}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-black/60 dark:text-white/60 truncate">
+                              {listing.user?.name || "Unknown User"}
+                            </span>
+                          </div>
                         </div>
                       </Link>
                     ))}
@@ -763,27 +801,31 @@ export default function ProfilePage() {
                         className="flex flex-col sm:flex-row gap-4 p-4 bg-black/[.02] dark:bg-white/[.02] rounded-lg hover:bg-black/[.04] dark:hover:bg-white/[.04] transition-colors"
                       >
                         <div className="flex flex-1 gap-4">
-                          {/* Trade direction indicator */}
-                          <div className="flex items-center">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                trade.type === "sent"
-                                  ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                  : "bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
-                              }`}
-                            >
-                              {trade.type === "sent" ? "Sent" : "Received"}
-                            </span>
-                          </div>
-
                           {/* Trade items */}
                           <div className="flex-1">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {/* From listing */}
+                              {/* First listing (what you offered or what they offered) */}
                               <div className="flex gap-2">
                                 <div className="relative h-12 w-12 flex-shrink-0 rounded bg-black/[.05] dark:bg-white/[.05] overflow-hidden">
-                                  {trade.fromListing?.images &&
-                                  trade.fromListing.images.length > 0 ? (
+                                  {/* Determine if user is sender or receiver to show correct listing */}
+                                  {user?.id === trade.fromUserId ? (
+                                    // User is sender, show fromListing as "You offered"
+                                    trade.fromListing?.images &&
+                                    trade.fromListing.images.length > 0 ? (
+                                      <Image
+                                        src={trade.fromListing.images[0]}
+                                        alt={trade.fromListing.title}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex items-center justify-center h-full w-full">
+                                        <RiImageAddLine className="w-5 h-5 text-black/20 dark:text-white/20" />
+                                      </div>
+                                    )
+                                  ) : // User is receiver, show fromListing as "They offered"
+                                  trade.fromListing?.images &&
+                                    trade.fromListing.images.length > 0 ? (
                                     <Image
                                       src={trade.fromListing.images[0]}
                                       alt={trade.fromListing.title}
@@ -801,12 +843,14 @@ export default function ProfilePage() {
                                     {trade.fromListing?.title || "Cash Offer"}
                                   </p>
                                   <p className="text-xs text-black/50 dark:text-white/50">
-                                    Offered
+                                    {user?.id === trade.fromUserId
+                                      ? "You Offered"
+                                      : "They Offered"}
                                   </p>
                                 </div>
                               </div>
 
-                              {/* To listing */}
+                              {/* Second listing (what you requested or what they requested) */}
                               <div className="flex gap-2">
                                 <div className="relative h-12 w-12 flex-shrink-0 rounded bg-black/[.05] dark:bg-white/[.05] overflow-hidden">
                                   {trade.toListing?.images &&
@@ -828,7 +872,9 @@ export default function ProfilePage() {
                                     {trade.toListing?.title || "Cash Offer"}
                                   </p>
                                   <p className="text-xs text-black/50 dark:text-white/50">
-                                    Requested
+                                    {user?.id === trade.fromUserId
+                                      ? "You Requested"
+                                      : "Your Item"}
                                   </p>
                                 </div>
                               </div>
