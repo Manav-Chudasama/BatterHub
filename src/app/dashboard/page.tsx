@@ -11,7 +11,9 @@ import {
   RiSearchLine,
   RiMessage3Line,
   RiArrowRightLine,
+  RiTeamLine,
 } from "react-icons/ri";
+import { DashboardStats, Listing, Activity, CommunityGoal } from "@/types";
 
 const quickActions = [
   {
@@ -35,49 +37,14 @@ const quickActions = [
     href: "/dashboard/messages",
     color: "purple",
   },
+  {
+    icon: RiTeamLine,
+    label: "Community Goals",
+    description: "Collaborate with others",
+    href: "/dashboard/community-goals",
+    color: "orange",
+  },
 ];
-
-interface DashboardStats {
-  activeTradeRequests: number;
-  completedTrades: number;
-  reputationScore: number;
-}
-
-interface Listing {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  images: string[];
-  userId: string;
-  user: {
-    name: string;
-    profilePicture?: string;
-    location?: {
-      city?: string;
-      state?: string;
-      country?: string;
-    };
-  };
-  tradePreferences: string;
-}
-
-interface Activity {
-  id: string;
-  type: "trade" | "system";
-  message: string;
-  date: string;
-  // Keeping these properties for backward compatibility
-  user?: {
-    name: string;
-    profilePicture?: string;
-  };
-  action?: string;
-  item?: string;
-  itemId?: string;
-  time?: string;
-  status?: string;
-}
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
@@ -95,6 +62,9 @@ export default function Dashboard() {
   const [activityLoading, setActivityLoading] = useState(true);
   const [recommendedLoading, setRecommendedLoading] = useState(true);
   const [reviews, setReviews] = useState<{ rating: number }[]>([]);
+  const [activeGoals, setActiveGoals] = useState<CommunityGoal[]>([]);
+  const [isLoadingGoals, setIsLoadingGoals] = useState(true);
+  const [goalsError, setGoalsError] = useState("");
 
   // Fetch dashboard stats
   useEffect(() => {
@@ -103,6 +73,7 @@ export default function Dashboard() {
       fetchUserReviews();
       fetchRecommendedListings();
       fetchRecentActivity();
+      fetchActiveGoals();
     }
   }, [isLoaded, user]);
 
@@ -191,6 +162,27 @@ export default function Dashboard() {
       console.error("Error fetching recent activity:", error);
     } finally {
       setActivityLoading(false);
+    }
+  };
+
+  const fetchActiveGoals = async () => {
+    setIsLoadingGoals(true);
+    try {
+      const response = await fetch(
+        "/api/community-goals?status=Active&limit=3"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch active goals");
+      }
+
+      const data = await response.json();
+      setActiveGoals(data.goals || []);
+    } catch (err) {
+      console.error("Error fetching active goals:", err);
+      setGoalsError("Failed to load active goals");
+    } finally {
+      setIsLoadingGoals(false);
     }
   };
 
@@ -444,34 +436,7 @@ export default function Dashboard() {
             </div>
           ) : recentActivity.length > 0 ? (
             recentActivity.map((activity, index) => (
-              <div
-                key={index}
-                className="mb-4 p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">
-                      {activity.message}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(activity.date).toLocaleDateString()} at{" "}
-                      {new Date(activity.date).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded ${
-                      activity.type === "trade"
-                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                        : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                    }`}
-                  >
-                    {activity.type === "trade" ? "Trade" : "System"}
-                  </span>
-                </div>
-              </div>
+              <ActivityItem key={index} activity={activity} />
             ))
           ) : (
             <div className="text-center py-8">
@@ -481,7 +446,179 @@ export default function Dashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* Community Goals */}
+        <div className="col-span-1 row-span-1 space-y-6">
+          {/* Goals Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Community Goals</h2>
+            <Link
+              href="/dashboard/community-goals"
+              className="text-sm text-emerald-600 dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 flex items-center"
+            >
+              View All
+              <RiArrowRightLine className="ml-1" />
+            </Link>
+          </div>
+
+          {/* Goals List */}
+          {isLoadingGoals ? (
+            <div className="text-center py-8 text-black/60 dark:text-white/60">
+              Loading community goals...
+            </div>
+          ) : activeGoals.length > 0 ? (
+            <div className="space-y-4">
+              {activeGoals.map((goal: CommunityGoal) => (
+                <Link
+                  href={`/dashboard/community-goals/${goal._id}`}
+                  key={goal._id}
+                  className="block bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-black/90 dark:text-white/90">
+                      {goal.title}
+                    </h3>
+                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                      {goal.goalType}
+                    </span>
+                  </div>
+
+                  <div className="mb-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-black/60 dark:text-white/60">
+                        Progress
+                      </span>
+                      <span className="font-medium">{goal.totalProgress}%</span>
+                    </div>
+                    <div className="h-1.5 bg-black/[.04] dark:bg-white/[.04] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full"
+                        style={{ width: `${goal.totalProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-black/60 dark:text-white/60 flex items-center">
+                    <RiTeamLine className="w-3.5 h-3.5 mr-1" />
+                    <span>
+                      {goal.contributions.length} contributor
+                      {goal.contributions.length !== 1 && "s"}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-6 text-center">
+              <RiTeamLine className="w-10 h-10 mx-auto mb-2 text-black/20 dark:text-white/20" />
+              <p className="mb-4 text-black/60 dark:text-white/60">
+                No active goals found
+              </p>
+              <Link
+                href="/dashboard/community-goals/create"
+                className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              >
+                Create a Goal
+              </Link>
+            </div>
+          )}
+
+          {goalsError && (
+            <div className="bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 p-4 rounded-lg text-center">
+              {goalsError}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
 }
+
+const ActivityItem = ({ activity }: { activity: Activity }) => {
+  return (
+    <div className="flex items-start bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4">
+      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-3 flex-shrink-0">
+        {activity.user?.profilePicture ? (
+          <img
+            src={activity.user.profilePicture}
+            alt={activity.user.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
+            {activity.user?.name ? activity.user.name.charAt(0) : "?"}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p>
+          <span className="font-medium">{activity.user?.name}</span>{" "}
+          {activity.message ||
+            (activity.type === "trade"
+              ? "sent a trade request for"
+              : "viewed your listing")}
+          {activity.item && (
+            <>
+              {" "}
+              <Link
+                href={`/dashboard/listings/${activity.itemId}`}
+                className="text-emerald-600 dark:text-emerald-500 hover:underline"
+              >
+                {activity.item}
+              </Link>
+            </>
+          )}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          {activity.date
+            ? `${new Date(activity.date).toLocaleDateString()} at ${new Date(
+                activity.date
+              ).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`
+            : formatRelativeTime(activity.createdAt || "")}
+        </p>
+      </div>
+      {activity.status && (
+        <span
+          className={`ml-2 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+            activity.status === "accepted"
+              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+              : activity.status === "completed"
+              ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+              : activity.status === "declined"
+              ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+              : "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+          }`}
+        >
+          {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  if (!dateString) return "Unknown time";
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffDay > 7) {
+    return date.toLocaleDateString();
+  } else if (diffDay > 0) {
+    return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+  } else if (diffHour > 0) {
+    return `${diffHour} hour${diffHour > 1 ? "s" : ""} ago`;
+  } else if (diffMin > 0) {
+    return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  } else {
+    return "Just now";
+  }
+};

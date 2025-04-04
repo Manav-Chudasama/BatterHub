@@ -8,6 +8,8 @@ interface SocketContextType {
   isConnected: boolean;
   joinChat: (chatId: string) => void;
   leaveChat: (chatId: string) => void;
+  joinForum: (goalId: string) => void;
+  leaveForum: (goalId: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -15,6 +17,8 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
   joinChat: () => {},
   leaveChat: () => {},
+  joinForum: () => {},
+  leaveForum: () => {},
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -134,9 +138,32 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const joinForum = (goalId: string) => {
+    if (socket && isConnected) {
+      console.log(`Joining forum for goal: ${goalId}`);
+      socket.emit("join_forum", goalId);
+    } else {
+      console.warn("Cannot join forum - socket not connected");
+    }
+  };
+
+  const leaveForum = (goalId: string) => {
+    if (socket && isConnected) {
+      console.log(`Leaving forum for goal: ${goalId}`);
+      socket.emit("leave_forum", goalId);
+    }
+  };
+
   return (
     <SocketContext.Provider
-      value={{ socket, isConnected, joinChat, leaveChat }}
+      value={{
+        socket,
+        isConnected,
+        joinChat,
+        leaveChat,
+        joinForum,
+        leaveForum,
+      }}
     >
       {children}
     </SocketContext.Provider>

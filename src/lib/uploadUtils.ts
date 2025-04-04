@@ -154,10 +154,55 @@ export const uploadFile = async (
 ): Promise<{ url: string; publicId: string; resourceType: string }> => {
   // Determine the appropriate resource type
   let resourceType: "image" | "video" | "raw" | "auto";
+  let timeoutDuration = 60000; // Default 60 seconds timeout
 
   if (file.type.startsWith("video/")) {
     resourceType = "video";
-    console.log(`Processing video file: ${file.name} (${file.type})`);
+    // Extend timeout for video files based on size
+    // Allow roughly 1MB per second upload speed as a conservative estimate
+    const fileSizeMB = file.size / 1024 / 1024;
+    timeoutDuration = Math.max(600000, fileSizeMB * 5000); // At least 10 minutes, or longer based on file size
+    console.log(
+      `Processing video file: ${file.name} (${
+        file.type
+      }), size: ${fileSizeMB.toFixed(2)}MB, timeout: ${timeoutDuration / 1000}s`
+    );
+
+    // Video optimization pre-check
+    if (fileSizeMB > 100) {
+      console.log(
+        "Very large video detected, consider compressing it first for faster uploads"
+      );
+      // Show a warning to the user that this might take a while
+      if (onProgress) {
+        onProgress(1); // Start at 1% to show activity
+      }
+    }
+
+    // Log the video format to help with debugging
+    const videoFormat = file.type.split("/")[1] || "unknown";
+    console.log(`Video format detected: ${videoFormat}`);
+
+    // Check if the video format is well-supported by Cloudinary
+    const wellSupportedFormats = ["mp4", "mov", "avi", "webm"];
+    const isWellSupported = wellSupportedFormats.some((format) =>
+      videoFormat.toLowerCase().includes(format)
+    );
+
+    if (!isWellSupported) {
+      console.warn(
+        `Video format ${videoFormat} may not be well-supported. Converting to MP4 is recommended.`
+      );
+      if (onProgress) {
+        // Show initial progress but slower to indicate potential issues
+        onProgress(2);
+      }
+    }
+
+    // For very large videos, use specialized upload strategy
+    if (file.size > 50 * 1024 * 1024) {
+      return uploadLargeVideo(file, onProgress);
+    }
   } else if (
     file.type === "application/pdf" ||
     file.type.includes("document") ||
@@ -177,7 +222,7 @@ export const uploadFile = async (
   try {
     // Create an AbortController to handle timeouts and cancellations
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
     // Set up the fetch options with the signal
     const fetchOptions: RequestInit = {
@@ -186,43 +231,305 @@ export const uploadFile = async (
       signal: controller.signal,
     };
 
-    // Set up a mock progress handler if onProgress is provided
+    // Improved progress handling for large uploads
     if (onProgress) {
       // Set initial progress
-      onProgress(10);
+      onProgress(5);
 
-      // Simulate progress since fetch doesn't provide upload progress
+      let isUploading = true;
+
+      // For video files, we need a slower, more realistic progress simulation
       const simulateProgress = () => {
-        let progress = 10;
-        const interval = setInterval(() => {
-          progress += 5;
-          if (progress >= 90) {
-            clearInterval(interval);
-          } else {
-            onProgress(progress);
-          }
-        }, 300);
+        let progress = 5;
 
-        return () => clearInterval(interval);
+        // Different increment speeds based on file size
+        const fileSizeMB = file.size / 1024 / 1024;
+        let increment = 0;
+
+        if (file.type.startsWith("video/")) {
+          // For videos, base increment on file size
+          if (fileSizeMB > 100) {
+            increment = 0.1; // Very slow for huge videos
+          } else if (fileSizeMB > 50) {
+            increment = 0.2; // Slow for large videos
+          } else if (fileSizeMB > 20) {
+            increment = 0.4; // Medium for medium videos
+          } else {
+            increment = 0.8; // Faster for small videos
+          }
+        } else {
+          // For non-videos, use faster increments
+          increment = 2;
+        }
+
+        // Calculate estimated time based on file size
+        const uploadTimeEstimate = Math.max(30, fileSizeMB * 1.5); // Seconds
+        const incrementInterval = Math.max(
+          300,
+          (uploadTimeEstimate * 1000) / 85
+        ); // Divide by number of steps (85%, from 5% to 90%)
+
+        console.log(
+          `Upload time estimate: ${uploadTimeEstimate.toFixed(
+            0
+          )}s, update interval: ${(incrementInterval / 1000).toFixed(1)}s`
+        );
+
+        const interval = setInterval(() => {
+          if (!isUploading) {
+            clearInterval(interval);
+            return;
+          }
+
+          progress += increment;
+
+          // Cap progress at 90% until we get actual confirmation
+          if (progress >= 90) {
+            progress = 90;
+            clearInterval(interval);
+          }
+
+          onProgress(Math.round(progress));
+        }, incrementInterval / 90); // Distribute updates evenly
+
+        return () => {
+          isUploading = false;
+          clearInterval(interval);
+        };
       };
 
       const clearProgressSimulation = simulateProgress();
 
-      // Clean up the progress simulation when done
-      setTimeout(() => {
+      // Handle completion or failure
+      const completeProgress = (success = true) => {
         clearProgressSimulation();
-        onProgress(100);
-      }, 5000);
+
+        // On success, animate from current progress to 100%
+        if (success) {
+          // Simulate the final processing steps
+          const processingInterval = setInterval(() => {
+            // Get current progress
+            const currentProgress = onProgress.toString().match(/\d+/);
+            const current = currentProgress ? parseInt(currentProgress[0]) : 90;
+
+            if (current >= 100) {
+              clearInterval(processingInterval);
+              return;
+            }
+
+            onProgress(Math.min(100, current + 2));
+          }, 200);
+
+          // Ensure we reach 100% after a fixed time
+          setTimeout(() => {
+            clearInterval(processingInterval);
+            onProgress(100);
+          }, 2000);
+        } else {
+          onProgress(0);
+        }
+      };
+
+      try {
+        // Attempt the upload
+        const response = await fetch(`/api/upload/cloudinary`, fetchOptions);
+
+        // Clear the timeout since the request has completed
+        clearTimeout(timeoutId);
+
+        // Handle response
+        if (!response.ok) {
+          completeProgress(false);
+          const errorData = await response.json();
+
+          // Show a user-friendly error message based on the error type
+          let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+
+          if (errorData.error) {
+            errorMessage = errorData.error;
+
+            // Adjust the error message for specific file types
+            if (
+              file.type.startsWith("video/") &&
+              (errorMessage.includes("format") ||
+                errorMessage.includes("streaming"))
+            ) {
+              errorMessage = `This video format is not supported. Please convert to MP4 and try again.`;
+            }
+
+            // Log details for debugging
+            console.error("Upload error details:", errorData);
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        completeProgress(true);
+        console.log("Upload success:", data);
+
+        return {
+          url: data.url,
+          publicId: data.public_id,
+          resourceType: data.resource_type,
+        };
+      } catch (error) {
+        completeProgress(false);
+        throw error;
+      }
+    } else {
+      // No progress callback, just upload normally
+      const response = await fetch(`/api/upload/cloudinary`, fetchOptions);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Upload failed: ${response.status} ${response.statusText} - ${
+            errorData.error || "Unknown error"
+          }`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Upload success:", data);
+
+      return {
+        url: data.url,
+        publicId: data.public_id,
+        resourceType: data.resource_type,
+      };
+    }
+  } catch (error) {
+    console.error("File upload error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Special handling for large video files to improve reliability
+ */
+const uploadLargeVideo = async (
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<{ url: string; publicId: string; resourceType: string }> => {
+  if (onProgress) {
+    onProgress(2);
+  }
+
+  // Check if video format is MP4 - highest chance of success with Cloudinary
+  const videoFormat = file.type.split("/")[1]?.toLowerCase() || "";
+  const isMP4 = videoFormat === "mp4";
+
+  if (!isMP4) {
+    console.warn(
+      "Non-MP4 video detected. For best results, convert to MP4 format before uploading."
+    );
+  }
+
+  console.log(
+    `Using optimized upload strategy for large video: ${file.name} (${(
+      file.size /
+      1024 /
+      1024
+    ).toFixed(2)}MB)`
+  );
+
+  try {
+    // Using FormData for file uploads
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // Calculate a realistic timeout based on file size
+    const timeoutSeconds = Math.max(600, file.size / 1024 / 100); // ~10KB/s minimum upload speed
+    console.log(
+      `Setting timeout to ${timeoutSeconds.toFixed(
+        0
+      )} seconds for large video upload`
+    );
+
+    // Create an AbortController to handle timeouts and cancellations
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      timeoutSeconds * 1000
+    );
+
+    // Progress simulation function
+    let progressTracker = {
+      currentProgress: 2,
+      interval: null as NodeJS.Timeout | null,
+      isComplete: false,
+    };
+
+    if (onProgress) {
+      const updateInterval = Math.max(1000, (file.size / 1024 / 1024) * 50); // Slower updates for larger files
+
+      progressTracker.interval = setInterval(() => {
+        if (progressTracker.isComplete) return;
+
+        // Very slow progression for large files
+        const increment = file.size > 100 * 1024 * 1024 ? 0.2 : 0.5;
+        progressTracker.currentProgress += increment;
+
+        // Cap at 95%
+        if (progressTracker.currentProgress >= 95) {
+          progressTracker.currentProgress = 95;
+          if (progressTracker.interval) {
+            clearInterval(progressTracker.interval);
+            progressTracker.interval = null;
+          }
+        }
+
+        onProgress(Math.round(progressTracker.currentProgress));
+      }, updateInterval);
     }
 
-    // Attempt the upload
-    const response = await fetch(`/api/upload/cloudinary`, fetchOptions);
+    // Complete function to clean up and set final progress
+    const completeProgress = (success: boolean) => {
+      progressTracker.isComplete = true;
 
-    // Clear the timeout since the request has completed
+      if (progressTracker.interval) {
+        clearInterval(progressTracker.interval);
+        progressTracker.interval = null;
+      }
+
+      if (onProgress) {
+        if (success) {
+          // Animate to 100%
+          const finalInterval = setInterval(() => {
+            progressTracker.currentProgress += 1;
+            if (progressTracker.currentProgress >= 100) {
+              progressTracker.currentProgress = 100;
+              clearInterval(finalInterval);
+            }
+            onProgress(Math.round(progressTracker.currentProgress));
+          }, 100);
+
+          // Ensure we reach 100% after a short delay
+          setTimeout(() => {
+            clearInterval(finalInterval);
+            onProgress(100);
+          }, 1000);
+        } else {
+          onProgress(0);
+        }
+      }
+    };
+
+    // Attempt the upload
+    const response = await fetch(`/api/upload/cloudinary`, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    });
+
+    // Clear the timeout
     clearTimeout(timeoutId);
 
     // Handle response
     if (!response.ok) {
+      completeProgress(false);
       const errorData = await response.json();
       throw new Error(
         `Upload failed: ${response.status} ${response.statusText} - ${
@@ -232,7 +539,8 @@ export const uploadFile = async (
     }
 
     const data = await response.json();
-    console.log("Upload success:", data);
+    completeProgress(true);
+    console.log("Large video upload success:", data);
 
     return {
       url: data.url,
@@ -240,7 +548,10 @@ export const uploadFile = async (
       resourceType: data.resource_type,
     };
   } catch (error) {
-    console.error("File upload error:", error);
+    console.error("Large video upload error:", error);
+    if (onProgress) {
+      onProgress(0); // Reset progress on error
+    }
     throw error;
   }
 };

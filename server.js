@@ -65,6 +65,48 @@ app.prepare().then(() => {
       socket.to(data.chatId).emit(`new_message_${data.chatId}`, data.message);
     });
 
+    // Handle joining a forum room
+    socket.on("join_forum", (goalId) => {
+      const roomName = `forum:${goalId}`;
+      console.log(`Socket ${socket.id} joining forum room: ${roomName}`);
+      socket.join(roomName);
+
+      // Log active rooms for this socket
+      const rooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
+      console.log(`Socket ${socket.id} is now in rooms:`, rooms);
+    });
+
+    // Handle leaving a forum room
+    socket.on("leave_forum", (goalId) => {
+      const roomName = `forum:${goalId}`;
+      console.log(`Socket ${socket.id} leaving forum room: ${roomName}`);
+      socket.leave(roomName);
+    });
+
+    // Handle new forum messages
+    socket.on("new_forum_message", (data) => {
+      if (!data || !data.goalId || !data.message) {
+        console.error("Invalid forum message data:", data);
+        socket.emit("error", "Invalid message data");
+        return;
+      }
+
+      const roomName = `forum:${data.goalId}`;
+      console.log(
+        `New forum message in room ${roomName} from socket ${socket.id}`
+      );
+      console.log("Message content:", data.message);
+
+      // Log all rooms
+      const rooms = Array.from(io.sockets.adapter.rooms.keys());
+      console.log("Active rooms:", rooms);
+
+      // Send to all clients in the forum room (including sender for confirmation)
+      io.to(roomName).emit("new_forum_message", data.goalId, data.message);
+
+      console.log(`Message broadcasted to room ${roomName}`);
+    });
+
     // Handle disconnect
     socket.on("disconnect", (reason) => {
       console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);

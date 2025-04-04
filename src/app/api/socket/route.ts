@@ -9,12 +9,16 @@ export const fetchCache = "force-no-store";
  */
 export async function GET() {
   try {
-    // This is a workaround for Next.js App Router as there's no direct access to the underlying HTTP server
-    // In real production, you'd use a custom server.js file or Next.js API routes
-    console.log("Socket API route hit");
+    // Socket.io in Next.js App Router is handled by a separate process
+    // This endpoint just confirms the server is ready to accept connections
+    console.log("Socket API route hit - ready for connections");
 
     return new NextResponse(
-      JSON.stringify({ success: true, message: "Socket server is running" }),
+      JSON.stringify({
+        success: true,
+        message: "Socket server is running",
+        timestamp: new Date().toISOString(),
+      }),
       {
         status: 200,
         headers: {
@@ -22,6 +26,7 @@ export async function GET() {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Cache-Control": "no-store, max-age=0",
         },
       }
     );
@@ -42,6 +47,7 @@ export async function OPTIONS() {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Cache-Control": "no-store, max-age=0",
     },
   });
 }

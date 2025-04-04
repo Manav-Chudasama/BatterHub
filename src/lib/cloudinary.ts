@@ -34,6 +34,8 @@ export const uploadToCloudinary = async (
     transformation?: CloudinaryTransformation[];
     resource_type?: "image" | "video" | "raw" | "auto";
     format?: string;
+    timeout?: number;
+    chunk_size?: number;
   }
 ) => {
   const {
@@ -43,6 +45,8 @@ export const uploadToCloudinary = async (
     transformation,
     resource_type = "auto",
     format,
+    timeout,
+    chunk_size,
   } = options || {};
 
   try {
@@ -74,8 +78,31 @@ export const uploadToCloudinary = async (
 
       // For videos, we need to ensure proper handling
       if (resource_type === "video") {
-        // Ensure video_codec is set to auto
+        // Ensure video_codec is set to auto for best compatibility
         uploadOptions.video_codec = "auto";
+
+        // Simplify video settings - remove eager transformations which are causing errors
+        // uploadOptions.eager = [{ format: "mp4", quality: "auto:low" }];
+
+        // Set a timeout specifically for videos
+        if (timeout) {
+          uploadOptions.timeout = timeout;
+        } else {
+          uploadOptions.timeout = 300000; // 5 minutes default for videos
+        }
+
+        // Use larger chunk size to speed up upload
+        if (chunk_size) {
+          uploadOptions.chunk_size = chunk_size;
+        } else {
+          uploadOptions.chunk_size = 20000000; // 20MB chunks for faster upload
+        }
+
+        // Use options to improve video upload reliability
+        // uploadOptions.eager_async = true; // Remove eager_async as it requires notification URL
+        uploadOptions.use_filename = true;
+        uploadOptions.unique_filename = true;
+        uploadOptions.overwrite = true;
       }
 
       // For PDFs and documents uploaded as 'raw', we need to handle them differently

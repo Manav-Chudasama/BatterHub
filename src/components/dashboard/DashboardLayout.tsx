@@ -61,8 +61,8 @@ const sidebarLinks = [
   },
   {
     icon: RiTeamLine,
-    label: "Community",
-    href: "/dashboard/community",
+    label: "Community Goals",
+    href: "/dashboard/community-goals",
   },
   {
     icon: RiUser3Line,
