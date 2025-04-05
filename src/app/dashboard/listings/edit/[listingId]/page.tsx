@@ -78,6 +78,7 @@ export default function EditListingPage({
   useEffect(() => {
     const fetchListing = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch(`/api/listings/${listingId}`);
 
         if (!response.ok) {
@@ -85,15 +86,22 @@ export default function EditListingPage({
         }
 
         const data = await response.json();
-        setListing(data);
+        const fetchedListing = data.listing;
+
+        // Make sure we have a valid listing with all required fields
+        if (!fetchedListing) {
+          throw new Error("Invalid listing data received");
+        }
+
+        setListing(fetchedListing);
         setFormData({
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          tradePreferences: data.tradePreferences,
+          title: fetchedListing.title || "",
+          description: fetchedListing.description || "",
+          category: fetchedListing.category || "",
+          tradePreferences: fetchedListing.tradePreferences || "",
         });
-        setSelectedAvailability(data.availability);
-        setExistingImages(data.images || []);
+        setSelectedAvailability(fetchedListing.availability || []);
+        setExistingImages(fetchedListing.images || []);
       } catch (error) {
         console.error("Error fetching listing:", error);
         setFormError("Could not load listing data. Please try again later.");
@@ -108,10 +116,11 @@ export default function EditListingPage({
   }, [isLoaded, user, listingId]);
 
   // If user is not authenticated, redirect to sign-in
-  if (isLoaded && !user) {
-    router.push("/sign-in");
-    return null;
-  }
+  useEffect(() => {
+    if (isLoaded && !user) {
+      router.push("/sign-in");
+    }
+  }, [isLoaded, user, router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -242,9 +251,9 @@ export default function EditListingPage({
 
       setFormSuccess("Listing updated successfully!");
 
-      // Redirect to the listings page after a short delay
+      // Redirect to the listing details page after a short delay
       setTimeout(() => {
-        router.push(`/dashboard/listings/my`);
+        router.push(`/dashboard/listings/${listing._id}`);
       }, 1500);
     } catch (error: unknown) {
       console.error("Error updating listing:", error);
@@ -416,7 +425,7 @@ export default function EditListingPage({
                     type="button"
                     onClick={() => toggleAvailability(option)}
                     className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                      selectedAvailability.includes(option)
+                      selectedAvailability?.includes(option)
                         ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-500"
                         : "bg-black/[.02] dark:bg-white/[.02] text-black/60 dark:text-white/60 hover:bg-black/[.05] dark:hover:bg-white/[.05]"
                     }`}

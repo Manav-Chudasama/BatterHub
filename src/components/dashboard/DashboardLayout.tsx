@@ -69,11 +69,6 @@ const sidebarLinks = [
     label: "Profile",
     href: "/dashboard/profile",
   },
-  {
-    icon: RiSettings4Line,
-    label: "Settings",
-    href: "/dashboard/settings",
-  },
 ];
 
 export default function DashboardLayout({
