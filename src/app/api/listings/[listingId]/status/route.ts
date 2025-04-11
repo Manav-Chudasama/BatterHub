@@ -34,7 +34,7 @@ export async function OPTIONS() {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { listingId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { listingId } = params;

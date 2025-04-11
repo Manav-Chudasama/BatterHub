@@ -55,7 +55,7 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { goalId: string; contributionId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId, contributionId } = params;
@@ -123,7 +123,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { goalId: string; contributionId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId, contributionId } = params;

@@ -50,7 +50,7 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const goalId = params.goalId;
@@ -104,7 +104,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const goalId = params.goalId;
@@ -200,7 +200,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const goalId = params.goalId;

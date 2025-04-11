@@ -35,7 +35,7 @@ export async function OPTIONS() {
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { listingId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { userId } = getAuth(req);
@@ -105,7 +105,7 @@ export async function POST(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { listingId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { userId } = getAuth(req);

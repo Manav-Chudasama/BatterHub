@@ -56,7 +56,7 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  context: { params: { goalId: string } }
+  context: any
 ) {
   try {
     // Properly await params in Next.js 14
@@ -166,7 +166,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  context: { params: { goalId: string } }
+  context: any
 ) {
   try {
     // Properly await params in Next.js 14

@@ -74,7 +74,7 @@ export async function OPTIONS() {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { goalId: string; contributionId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId, contributionId } = params;

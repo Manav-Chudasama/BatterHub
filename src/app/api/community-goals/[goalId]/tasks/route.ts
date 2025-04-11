@@ -34,7 +34,7 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId } = params;
@@ -78,7 +78,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId } = params;
@@ -169,7 +169,7 @@ export async function POST(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId } = params;
@@ -226,7 +226,7 @@ export async function PUT(
 
     // Find the task to update
     const taskIndex = goal.tasks.findIndex(
-      (t) => t._id.toString() === body.taskId
+      (t: any) => t._id.toString() === body.taskId
     );
 
     if (taskIndex === -1) {
@@ -271,7 +271,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  { params }: { params: any }
 ) {
   try {
     const { goalId } = params;
@@ -327,7 +327,9 @@ export async function DELETE(
     }
 
     // Remove the task
-    const taskIndex = goal.tasks.findIndex((t) => t._id.toString() === taskId);
+    const taskIndex = goal.tasks.findIndex(
+      (t: any) => t._id.toString() === taskId
+    );
 
     if (taskIndex === -1) {
       return NextResponse.json(
