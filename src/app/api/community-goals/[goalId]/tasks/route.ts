@@ -60,11 +60,12 @@ export async function GET(
     }
 
     return NextResponse.json(
-      { tasks: goal.tasks || [] },
+      { tasks: (goal as any).tasks || [] },
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error fetching tasks for goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error fetching tasks for goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch tasks" },
       { status: 500, headers: corsHeaders }
@@ -155,7 +156,8 @@ export async function POST(
       { status: 201, headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error adding task to goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error adding task to goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to add task" },
       { status: 500, headers: corsHeaders }
@@ -257,7 +259,8 @@ export async function PUT(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error updating task in goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error updating task in goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to update task" },
       { status: 500, headers: corsHeaders }
@@ -346,7 +349,8 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error deleting task from goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error deleting task from goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete task" },
       { status: 500, headers: corsHeaders }
