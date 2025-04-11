@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -348,4 +348,12 @@ const MessagesPage = () => {
   );
 };
 
-export default MessagesPage;
+const MessagesPageWrapper = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MessagesPage />
+    </Suspense>
+  );
+};
+
+export default MessagesPageWrapper;
