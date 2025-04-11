@@ -25,6 +25,7 @@ interface GoalUpdate {
     country?: string;
   };
   updatedAt: Date;
+  [key: string]: any; // Add index signature
 }
 
 /**
@@ -127,7 +128,7 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as Partial<GoalUpdate>;
 
     await connectToDatabase();
 
