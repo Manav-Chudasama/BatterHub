@@ -33,15 +33,10 @@ export async function OPTIONS() {
  * POST /api/community-goals/[goalId]/contribute
  * Add a contribution to a community goal
  */
-type Context = {
-  params: {
-    goalId: string;
-  };
-};
 
 export async function POST(
   request: NextRequest,
-  context: Context
+  context: any
 ) {
   try {
     const goalId = context.params.goalId;
