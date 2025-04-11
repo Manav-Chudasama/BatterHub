@@ -35,10 +35,10 @@ export async function OPTIONS() {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { goalId: string } }
+  context: { params: { goalId: string } }
 ) {
   try {
-    const { goalId } = params;
+    const { goalId } = context.params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -313,7 +313,7 @@ export async function POST(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { goalId } = params;
+    const { goalId } = context.params;
     console.error(`Error contributing to goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to add contribution" },
