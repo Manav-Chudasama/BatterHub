@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -20,11 +20,11 @@ import Image from "next/image";
 export default function EditCommunityGoalPage({
   params,
 }: {
-  params: { goalId: string };
+  params: Promise<{ goalId: string }>;
 }) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const { goalId } = params;
+  const { goalId } = use(params);
 
   const [formData, setFormData] = useState({
     title: "",
