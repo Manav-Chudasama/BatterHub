@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BarterHub",
-  description: "BarterHub is a platform for bartering goods and skills.",
+  title: "BatterHub",
+  description: "BatterHub is a platform for bartering goods and skills.",
 };
 
 export default function RootLayout({
