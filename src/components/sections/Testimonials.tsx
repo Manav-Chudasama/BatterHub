@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 
 const testimonials = [
@@ -62,10 +63,12 @@ export function Testimonials() {
                 className="bg-white dark:bg-black rounded-lg p-6 border border-black/[.08] dark:border-white/[.08] hover:border-emerald-200/20 dark:hover:border-emerald-700/20 transition-all duration-300"
               >
                 <div className="flex items-center mb-6">
-                  <img
+                  <Image
                     src={testimonial.image}
                     alt={testimonial.name}
-                    className="w-12 h-12 rounded-full"
+                    className="rounded-full"
+                    width={48}
+                    height={48}
                   />
                   <div className="ml-4">
                     <h3 className="font-semibold">{testimonial.name}</h3>

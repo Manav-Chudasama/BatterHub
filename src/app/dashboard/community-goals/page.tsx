@@ -16,8 +16,8 @@ import {
   RiEmotionSadLine,
   RiArrowRightSLine,
   RiArrowLeftSLine,
-  RiFlagLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 interface CommunityGoal {
   _id: string;
@@ -66,7 +66,6 @@ export default function CommunityGoalsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const [goals, setGoals] = useState<CommunityGoal[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
@@ -128,7 +127,6 @@ export default function CommunityGoalsPage() {
       );
     } catch (err) {
       console.error("Error fetching community goals:", err);
-      setError("Failed to load community goals. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -381,7 +379,7 @@ export default function CommunityGoalsPage() {
               >
                 {/* Goal image or placeholder */}
                 <div className="relative aspect-video">
-                  <img
+                  <Image
                     src={
                       goal.imageUrl ||
                       `https://placehold.co/600x400/90EAC3/333333?text=${encodeURIComponent(
@@ -390,6 +388,9 @@ export default function CommunityGoalsPage() {
                     }
                     alt={goal.title}
                     className="w-full h-full object-cover"
+                    width={600}
+                    height={400}
+                    
                   />
                   <div className="absolute top-0 left-0 right-0 bottom-0 bg-gradient-to-b from-black/20 to-black/60">
                     <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -447,10 +448,12 @@ export default function CommunityGoalsPage() {
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
                         {goal.createdBy?.profilePicture ? (
-                          <img
+                          <Image
                             src={goal.createdBy.profilePicture}
                             alt={goal.createdBy.name}
                             className="w-full h-full object-cover"
+                            width={32}
+                            height={32}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">

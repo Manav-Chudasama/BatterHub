@@ -9,7 +9,6 @@ import {
   RiMessage2Line,
   RiTeamLine,
   RiUser3Line,
-  RiSettings4Line,
   RiNotification3Line,
   RiMenuFoldLine,
   RiMenuUnfoldLine,

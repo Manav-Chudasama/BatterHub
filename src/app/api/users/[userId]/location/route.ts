@@ -9,6 +9,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Type definitions for location data
+interface LocationData {
+  coordinates?: [number, number];
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  type?: string;
+  [key: string]: string | [number, number] | undefined;
+}
+
+// Type for MongoDB location update operations
+type LocationUpdateFields = {
+  [key: string]: string | number | [number, number];
+};
+
 /**
  * OPTIONS /api/users/[userId]/location
  * Handle CORS preflight requests
@@ -69,7 +85,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = params;
-    const locationData = await request.json();
+    const locationData = (await request.json()) as LocationData;
 
     // Validate the request body
     if (!locationData || typeof locationData !== "object") {
@@ -133,21 +149,31 @@ export async function PUT(
     await connectToDatabase();
 
     // Create GeoJSON point if coordinates are provided
-    let locationUpdate: Record<string, any> = {};
+    let locationUpdate: LocationUpdateFields = {};
 
-    if ("coordinates" in locationData) {
+    if ("coordinates" in locationData && locationData.coordinates) {
       // Ensure coordinates are in GeoJSON format [longitude, latitude]
       locationUpdate = {
         "location.coordinates": locationData.coordinates,
         "location.type": "Point",
       };
-      delete locationData.coordinates;
-    }
 
-    // Add other location fields
-    for (const [key, value] of Object.entries(locationData)) {
-      if (key !== "coordinates" && key !== "type") {
-        locationUpdate[`location.${key}`] = value;
+      // Create a copy of the location data without coordinates for processing
+      const locationDataCopy = { ...locationData };
+      delete locationDataCopy.coordinates;
+
+      // Add other location fields
+      for (const [key, value] of Object.entries(locationDataCopy)) {
+        if (key !== "type" && value !== undefined) {
+          locationUpdate[`location.${key}`] = value;
+        }
+      }
+    } else {
+      // Add all location fields if no coordinates
+      for (const [key, value] of Object.entries(locationData)) {
+        if (value !== undefined) {
+          locationUpdate[`location.${key}`] = value;
+        }
       }
     }
 

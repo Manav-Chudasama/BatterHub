@@ -22,6 +22,13 @@ interface Task {
   contributionPercentage: number;
 }
 
+// Define query interface
+interface GoalQuery {
+  status?: string;
+  goalType?: string;
+  category?: string;
+}
+
 // CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Build query
-    const query: any = {};
+    const query: GoalQuery = {};
 
     if (status) {
       query.status = status;

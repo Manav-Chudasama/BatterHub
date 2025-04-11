@@ -11,6 +11,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Define filter query type
+interface ListingFilter {
+  status: string;
+  category?: string;
+  userId?: string;
+  $text?: { $search: string };
+  "location.city"?: { $regex: string; $options: string };
+  location?: {
+    $near: {
+      $geometry: {
+        type: string;
+        coordinates: number[];
+      };
+      $maxDistance: number;
+    };
+  };
+}
+
 /**
  * OPTIONS /api/listings
  * Handle CORS preflight requests
@@ -54,7 +72,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Build query
-    const filter: Record<string, any> = { status };
+    const filter: ListingFilter = { status };
 
     if (category) {
       filter.category = category;

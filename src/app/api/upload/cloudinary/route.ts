@@ -12,6 +12,24 @@ export const config = {
   },
 };
 
+// Type for Cloudinary upload response
+interface CloudinaryUploadResponse {
+  secure_url: string;
+  public_id: string;
+  resource_type: string;
+  [key: string]: unknown;
+}
+
+// Type for Cloudinary upload options
+interface CloudinaryUploadOptions {
+  folder: string;
+  resource_type: "image" | "video" | "raw" | "auto";
+  format?: string;
+  chunk_size?: number;
+  timeout?: number;
+  [key: string]: string | number | undefined;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Authenticate the user
@@ -94,7 +112,7 @@ export async function POST(request: NextRequest) {
     console.log(`File converted to buffer, size: ${buffer.length} bytes`);
 
     // For large videos, use a more efficient approach
-    let dataUrl;
+    let dataUrl: string;
     if (resourceType === "video" && buffer.length > 50 * 1024 * 1024) {
       // Over 50MB
       // Use a more efficient approach for large videos
@@ -125,10 +143,10 @@ export async function POST(request: NextRequest) {
     console.log(`Data URL created, length: ${dataUrl.length}`);
 
     // Set custom upload options based on file type
-    const uploadOptions: Record<string, any> = {
+    const uploadOptions: CloudinaryUploadOptions = {
       folder: "batterhub/messages",
       resource_type: resourceType,
-      format: format,
+      format,
     };
 
     // For videos, add special handling
@@ -143,12 +161,15 @@ export async function POST(request: NextRequest) {
     const uploadPromise = uploadToCloudinary(dataUrl, uploadOptions);
 
     // For videos we need a longer timeout
-    const timeoutPromise = new Promise((_, reject) => {
+    const timeoutPromise = new Promise<never>((_, reject) => {
       const timeoutMs = resourceType === "video" ? 600000 : 60000; // 10 minutes for video, 1 minute for others
       setTimeout(() => reject(new Error("Upload timeout")), timeoutMs);
     });
 
-    const result = (await Promise.race([uploadPromise, timeoutPromise])) as any;
+    const result = (await Promise.race([
+      uploadPromise,
+      timeoutPromise,
+    ])) as CloudinaryUploadResponse;
     console.log(`Upload completed successfully for ${file.name}`);
 
     // For raw files (like PDFs), ensure the URL has the correct extension
@@ -168,33 +189,34 @@ export async function POST(request: NextRequest) {
       public_id: result.public_id,
       resource_type: result.resource_type,
     });
-  } catch (error: any) {
-    console.error("Upload error:", error.message || error);
+  } catch (error: unknown) {
+    const err = error as Error & { http_code?: number };
+    console.error("Upload error:", err.message || err);
 
     // Handle specific Cloudinary errors with more helpful messages
     let errorMessage = "Failed to upload file";
     let statusCode = 500;
 
-    if (error.message) {
+    if (err.message) {
       // Check for specific Cloudinary error patterns
-      if (error.message.includes("streaming profile not supported")) {
+      if (err.message.includes("streaming profile not supported")) {
         errorMessage =
           "Video format not supported for streaming. Try converting to MP4 format.";
         statusCode = 400;
-      } else if (error.message.includes("Resource not found")) {
+      } else if (err.message.includes("Resource not found")) {
         errorMessage = "Upload service unavailable. Please try again later.";
         statusCode = 503;
-      } else if (error.message.includes("Upload timeout")) {
+      } else if (err.message.includes("Upload timeout")) {
         errorMessage =
           "Upload timed out. Try a smaller file or check your connection.";
         statusCode = 408;
-      } else if (error.message.includes("File size too large")) {
+      } else if (err.message.includes("File size too large")) {
         errorMessage = "File exceeds maximum size limit.";
         statusCode = 413;
-      } else if (error.message.includes("Invalid image")) {
+      } else if (err.message.includes("Invalid image")) {
         errorMessage = "Invalid media file format.";
         statusCode = 400;
-      } else if (error.message.includes("Eager notification url is invalid")) {
+      } else if (err.message.includes("Eager notification url is invalid")) {
         errorMessage =
           "Video upload configuration error. Please try again with different settings.";
         console.error(
@@ -203,15 +225,15 @@ export async function POST(request: NextRequest) {
         statusCode = 400;
       } else {
         // Include the original error for debugging
-        errorMessage = `Upload failed: ${error.message}`;
+        errorMessage = `Upload failed: ${err.message}`;
       }
     }
 
     return NextResponse.json(
       {
         error: errorMessage,
-        details: error.message || "Unknown error",
-        code: error.http_code || statusCode,
+        details: err.message || "Unknown error",
+        code: err.http_code || statusCode,
       },
       { status: statusCode }
     );

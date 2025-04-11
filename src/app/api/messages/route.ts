@@ -11,6 +11,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Define interfaces for message structure
+interface Message {
+  sender: string;
+  text?: string;
+  file?: string;
+  read: boolean;
+  createdAt: Date;
+}
+
 export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
 }
@@ -53,7 +62,7 @@ export async function GET(req: NextRequest) {
 
       // Mark all unread messages as read if they were sent by the other participant
       const unreadMessages = chat.messages.filter(
-        (msg) => !msg.read && msg.sender !== userId
+        (msg: Message) => !msg.read && msg.sender !== userId
       );
 
       if (unreadMessages.length > 0) {
@@ -70,7 +79,7 @@ export async function GET(req: NextRequest) {
 
       // Get user info for participants
       const otherParticipantId = updatedChat.participants.find(
-        (id) => id !== userId
+        (id: string) => id !== userId
       );
       const otherParticipant = await User.findOne(
         { userId: otherParticipantId },
@@ -97,7 +106,7 @@ export async function GET(req: NextRequest) {
       const userIds = [
         ...new Set(
           chats.flatMap((chat) =>
-            chat.participants.filter((id) => id !== userId)
+            chat.participants.filter((id: string) => id !== userId)
           )
         ),
       ];
@@ -113,13 +122,13 @@ export async function GET(req: NextRequest) {
       // Add participant info to each chat
       const chatsWithUserInfo = chats.map((chat) => {
         const otherParticipantId = chat.participants.find(
-          (id) => id !== userId
+          (id: string) => id !== userId
         );
         return {
           ...chat,
           otherParticipant: userMap.get(otherParticipantId) || null,
           unreadCount: chat.messages.filter(
-            (msg) => !msg.read && msg.sender !== userId
+            (msg: Message) => !msg.read && msg.sender !== userId
           ).length,
         };
       });

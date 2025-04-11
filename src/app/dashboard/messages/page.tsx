@@ -283,11 +283,12 @@ const MessagesPage = () => {
                   >
                     <div className="relative mr-3">
                       {chat.otherParticipant?.profilePicture ? (
-                        <img
+                        <Image
                           src={chat.otherParticipant.profilePicture}
                           alt={chat.otherParticipant.name || "User"}
                           className="w-12 h-12 rounded-full object-cover"
-                          
+                          width={48}
+                          height={48}
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-black/[.02] dark:bg-white/[.02] flex items-center justify-center text-emerald-600 dark:text-emerald-500 font-semibold">

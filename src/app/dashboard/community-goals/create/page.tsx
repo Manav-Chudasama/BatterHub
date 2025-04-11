@@ -177,7 +177,7 @@ export default function CreateCommunityGoalPage() {
         },
         body: JSON.stringify({
           ...formData,
-          tasks: tasks.map(({ _id, quantityFulfilled, ...rest }) => rest), // Remove temporary _id and quantityFulfilled
+          tasks: tasks.map(({  ...rest }) => rest), // Remove temporary _id and quantityFulfilled
         }),
       });
 

@@ -9,6 +9,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Define interfaces for MongoDB operations
+interface SkillsUpdateData {
+  skills?: string[];
+  interests?: string[];
+  $addToSet?: {
+    skills?: string | { $each: string[] };
+    interests?: string | { $each: string[] };
+  };
+  $pull?: {
+    skills?: string;
+    interests?: string;
+  };
+}
+
 /**
  * OPTIONS /api/users/[userId]/skills
  * Handle CORS preflight requests
@@ -86,7 +100,7 @@ export async function PUT(
     }
 
     // Create update object
-    const updateData: Record<string, any> = {};
+    const updateData: SkillsUpdateData = {};
     if (Array.isArray(skills)) {
       updateData.skills = skills;
     }
@@ -150,7 +164,7 @@ export async function POST(
     await connectToDatabase();
 
     // Create update object
-    const updateData: Record<string, any> = {};
+    const updateData: SkillsUpdateData = {};
 
     // Handle single additions
     if (skill) {
@@ -227,7 +241,7 @@ export async function DELETE(
     await connectToDatabase();
 
     // Create update object
-    const updateData: Record<string, any> = {};
+    const updateData: SkillsUpdateData = {};
 
     if (skill) {
       updateData.$pull = { ...updateData.$pull, skills: skill };

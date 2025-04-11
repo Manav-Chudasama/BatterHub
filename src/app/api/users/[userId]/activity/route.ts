@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/mongodb";
 import User from "@/models/User";
 import TradeRequest from "@/models/TradeRequest";
 import Review from "@/models/Review";
+import mongoose from "mongoose";
 
 // CORS headers
 const corsHeaders = {
@@ -11,6 +12,17 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
+
+// Type definitions
+interface UserProfile {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  profilePicture?: string;
+}
+
+interface ListingItem {
+  title: string;
+}
 
 /**
  * OPTIONS /api/users/[userId]/activity
@@ -80,6 +92,9 @@ export async function GET(
       );
     }
 
+    // Get user ID as string for comparison
+    const userIdString = String(user._id);
+
     // Get recent trade requests
     const recentTradeRequests = await TradeRequest.find({
       $or: [{ fromUser: user._id }, { toUser: user._id }],
@@ -125,14 +140,30 @@ export async function GET(
 
     // Process trade requests
     for (const tradeRequest of recentTradeRequests) {
-      const isIncoming =
-        tradeRequest.toUser._id.toString() === user._id.toString();
-      const otherUser = isIncoming
-        ? tradeRequest.fromUser
-        : tradeRequest.toUser;
-      const targetListing = isIncoming
-        ? tradeRequest.toListing
-        : tradeRequest.fromListing;
+      // Skip invalid entries
+      if (!tradeRequest || !tradeRequest._id) continue;
+
+      // Type safety check
+      const toUser = tradeRequest.toUser as unknown as UserProfile;
+      const fromUser = tradeRequest.fromUser as unknown as UserProfile;
+      const toListing = tradeRequest.toListing as unknown as ListingItem;
+      const fromListing = tradeRequest.fromListing as unknown as ListingItem;
+
+      if (
+        !toUser?._id ||
+        !toUser?.name ||
+        !fromUser?._id ||
+        !fromUser?.name ||
+        !toListing?.title
+      ) {
+        continue;
+      }
+
+      const isIncoming = String(toUser._id) === userIdString;
+      const otherUser = isIncoming ? fromUser : toUser;
+      const targetListing = isIncoming ? toListing : fromListing;
+
+      if (!targetListing?.title) continue;
 
       let type = "";
       let action = "";
@@ -160,7 +191,7 @@ export async function GET(
 
       if (type) {
         activities.push({
-          id: tradeRequest._id.toString(),
+          id: String(tradeRequest._id),
           type,
           user: {
             name: otherUser.name,
@@ -168,8 +199,8 @@ export async function GET(
           },
           action,
           item: targetListing.title,
-          itemId: tradeRequest._id.toString(),
-          time: formatRelativeTime(new Date(tradeRequest.createdAt)),
+          itemId: String(tradeRequest._id),
+          time: formatRelativeTime(new Date(tradeRequest.createdAt as Date)),
           status,
         });
       }
@@ -177,20 +208,30 @@ export async function GET(
 
     // Process reviews
     for (const review of recentReviews) {
-      const isReceived =
-        review.reviewedUserId.toString() === user._id.toString();
+      // Skip invalid entries
+      if (!review || !review._id || !review.tradeRequestId) continue;
+
+      // Type safety check
+      const reviewer = review.reviewer as unknown as UserProfile;
+      const reviewedUser = review.reviewedUser as unknown as UserProfile;
+
+      if (!reviewer?.name || !reviewedUser?.name) {
+        continue;
+      }
+
+      const isReceived = String(review.reviewedUserId) === userIdString;
 
       activities.push({
-        id: review._id.toString(),
+        id: String(review._id),
         type: "new_review",
         user: {
-          name: review.reviewer.name,
-          profilePicture: review.reviewer.profilePicture,
+          name: reviewer.name,
+          profilePicture: reviewer.profilePicture,
         },
         action: isReceived ? "left a review for" : "you reviewed",
-        item: isReceived ? "your services" : review.reviewedUser.name,
-        itemId: review.tradeRequestId.toString(),
-        time: formatRelativeTime(new Date(review.createdAt)),
+        item: isReceived ? "your services" : reviewedUser.name,
+        itemId: String(review.tradeRequestId),
+        time: formatRelativeTime(new Date(review.createdAt as Date)),
         status: "completed",
       });
     }

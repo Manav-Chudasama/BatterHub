@@ -19,6 +19,7 @@ import {
   RiExternalLinkLine,
   RiErrorWarningLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 // Define interfaces for the chat data
 interface UserInfo {
@@ -152,7 +153,7 @@ const ChatPage = ({ params }: { params: Promise<{ chatId: string }> }) => {
             });
           }, 500);
 
-          const { url, publicId, resourceType } = await uploadFile(file);
+          const { url } = await uploadFile(file);
           fileUrl = url;
 
           if (progressInterval) clearInterval(progressInterval);
@@ -460,10 +461,12 @@ const ChatPage = ({ params }: { params: Promise<{ chatId: string }> }) => {
 
             <div className="flex items-center">
               {chat.otherParticipant?.profilePicture ? (
-                <img
+                <Image
                   src={chat.otherParticipant.profilePicture}
                   alt={chat.otherParticipant.name || "User"}
                   className="w-10 h-10 rounded-full object-cover"
+                  width={40}
+                  height={40}
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-black/[.02] dark:bg-white/[.02] flex items-center justify-center text-emerald-600 dark:text-emerald-500 font-semibold">
@@ -584,10 +587,12 @@ const ChatPage = ({ params }: { params: Promise<{ chatId: string }> }) => {
                               /\.(jpe?g|png|gif|webp|svg)(\?.*)?$/i
                             ) ? (
                             <div className="relative">
-                              <img
+                              <Image
                                 src={message.file}
                                 alt="Image attachment"
-                                className="max-w-full max-h-60 rounded-md object-contain"
+                                className="max-w-full max-h-80 rounded-md object-contain"
+                                width={160}
+                                height={160}
                               />
                               <a
                                 href={message.file}

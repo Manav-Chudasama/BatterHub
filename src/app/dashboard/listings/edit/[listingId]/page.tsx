@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -13,6 +13,7 @@ import {
   RiErrorWarningLine,
   RiLoader4Line,
 } from "react-icons/ri";
+import Image from "next/image";
 
 // Define the same constants as in the listing creation page
 const LISTING_CATEGORIES = [
@@ -50,7 +51,7 @@ interface Listing {
 export default function EditListingPage({
   params,
 }: {
-  params: { listingId: string };
+  params: Promise<{ listingId: string }>;
 }) {
   const router = useRouter();
   const { user, isLoaded } = useUser();
@@ -72,7 +73,7 @@ export default function EditListingPage({
   const [formSuccess, setFormSuccess] = useState("");
   const [listing, setListing] = useState<Listing | null>(null);
 
-  const { listingId } = params;
+  const { listingId } = use(params);
 
   // Fetch the listing data
   useEffect(() => {
@@ -454,10 +455,12 @@ export default function EditListingPage({
                         key={`existing-${index}`}
                         className="relative aspect-square rounded-lg overflow-hidden border border-black/[.08] dark:border-white/[.08]"
                       >
-                        <img
+                        <Image
                           src={url}
                           alt={`Existing ${index + 1}`}
                           className="w-full h-full object-cover"
+                          width={400}
+                          height={300}
                         />
                         <button
                           type="button"
@@ -479,10 +482,12 @@ export default function EditListingPage({
                     key={index}
                     className="relative aspect-square rounded-lg overflow-hidden border border-black/[.08] dark:border-white/[.08]"
                   >
-                    <img
+                    <Image
                       src={url}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
+                      width={400}
+                      height={300}
                     />
                     <button
                       type="button"

@@ -23,6 +23,7 @@ import {
   RiDeleteBinLine,
   RiExchangeLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 interface Listing {
   _id: string;
@@ -303,10 +304,12 @@ export default function ListingDetailPage({
             >
               <div className="aspect-[4/3] relative">
                 {listing.images && listing.images.length > 0 ? (
-                  <img
+                  <Image
                     src={listing.images[selectedImageIndex]}
                     alt={`${listing.title} - Image ${selectedImageIndex + 1}`}
                     className="w-full h-full object-cover"
+                    width={400}
+                    height={300}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-black/[.02] dark:bg-white/[.02]">
@@ -348,10 +351,12 @@ export default function ListingDetailPage({
                           : "border-transparent"
                       }`}
                     >
-                      <img
+                      <Image
                         src={image}
                         alt={`Thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
+                        width={400}
+                        height={300}
                       />
                     </button>
                   ))}

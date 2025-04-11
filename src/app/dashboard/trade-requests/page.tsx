@@ -623,76 +623,75 @@ export default function TradeRequestsPage() {
                 return (
                   <div
                     key={request._id}
-                    className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden"
+                    className="bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
                   >
-                    <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+                    <div className="p-5">
                       {/* Trade request header and info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded ${
-                              request.type === "sent"
-                                ? "bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                                : "bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
-                            }`}
-                          >
-                            {request.type === "sent" ? "Sent" : "Received"}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded ${
-                              request.status === "pending"
-                                ? "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
-                                : request.status === "accepted"
-                                ? "bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-                                : request.status === "rejected"
-                                ? "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                                : request.status === "completed"
-                                ? "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400"
-                                : "bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
-                            }`}
-                          >
-                            {request.status === "countered"
-                              ? request.messages.length > 0 &&
-                                request.messages[request.messages.length - 1]
-                                  .from === user?.id
-                                ? "Waiting for Response"
-                                : "Counter Offer Received"
-                              : request.status.charAt(0).toUpperCase() +
-                                request.status.slice(1)}
-                          </span>
-                          {request.status === "completed" && (
-                            <>
-                              {request.reviewed ? (
-                                <span className="px-2 py-0.5 text-xs rounded bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                                  Reviewed
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 text-xs rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                                  Not Reviewed
-                                </span>
-                              )}
-                            </>
-                          )}
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                request.type === "sent"
+                                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                  : "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                              }`}
+                            >
+                              {request.type === "sent" ? "Sent" : "Received"}
+                            </span>
+                            <span
+                              className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                request.status === "pending"
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                                  : request.status === "accepted"
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                  : request.status === "rejected"
+                                  ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                  : request.status === "completed"
+                                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+                              }`}
+                            >
+                              {request.status === "countered"
+                                ? request.messages.length > 0 &&
+                                  request.messages[request.messages.length - 1]
+                                    .from === user?.id
+                                  ? "Waiting for Response"
+                                  : "Counter Offer Received"
+                                : request.status.charAt(0).toUpperCase() +
+                                  request.status.slice(1)}
+                            </span>
+                            {request.status === "completed" && (
+                              <span
+                                className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                  request.reviewed
+                                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                    : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                }`}
+                              >
+                                {request.reviewed ? "Reviewed" : "Not Reviewed"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-black/60 dark:text-white/60 text-sm">
+                            {new Date(request.createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
                         </div>
 
-                        <h3 className="text-lg font-semibold mb-1">
+                        <h3 className="text-xl font-semibold">
                           Trade with {otherUserName}
                         </h3>
 
-                        <p className="text-black/60 dark:text-white/60 text-sm mb-2">
-                          {new Date(request.createdAt).toLocaleDateString(
-                            undefined,
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </p>
-
-                        <div className="grid sm:grid-cols-2 gap-4 mb-4">
-                          <div className="bg-black/[.02] dark:bg-white/[.02] p-3 rounded-lg">
-                            <div className="font-medium mb-1">
+                        <div className="grid sm:grid-cols-2 gap-5">
+                          <div className="bg-black/[.03] dark:bg-white/[.03] p-4 rounded-xl">
+                            <div className="font-medium text-sm uppercase tracking-wide mb-2 text-black/70 dark:text-white/70">
                               {request.type === "sent"
                                 ? "You offer"
                                 : "They are requesting"}
@@ -702,13 +701,13 @@ export default function TradeRequestsPage() {
                                   .from !== user?.id &&
                                 " (countered)"}
                             </div>
-                            <div>
+                            <div className="font-medium mb-3 text-lg">
                               {request.type === "sent"
                                 ? request.fromListing?.title || "Cash offer"
                                 : request.toListing.title}
                             </div>
                             {/* Listing image for your offer/receive */}
-                            <div className="mt-2 relative w-full rounded-md bg-black/[.02] dark:bg-white/[.02] flex items-center justify-center">
+                            <div className="relative w-full rounded-lg overflow-hidden bg-white dark:bg-black/50 border border-black/10 dark:border-white/10">
                               {request.type === "sent" &&
                               request.fromListing &&
                               request.fromListing.images &&
@@ -719,7 +718,7 @@ export default function TradeRequestsPage() {
                                     alt={request.fromListing.title}
                                     fill
                                     sizes="(max-width: 640px) 100vw, 50vw"
-                                    className="object-contain absolute inset-0"
+                                    className="object-cover absolute inset-0 hover:scale-105 transition-transform duration-300"
                                   />
                                 </div>
                               ) : request.type === "received" &&
@@ -731,19 +730,19 @@ export default function TradeRequestsPage() {
                                     alt={request.toListing.title}
                                     fill
                                     sizes="(max-width: 640px) 100vw, 50vw"
-                                    className="object-contain absolute inset-0"
+                                    className="object-cover absolute inset-0 hover:scale-105 transition-transform duration-300"
                                   />
                                 </div>
                               ) : (
-                                <div className="flex items-center justify-center py-10">
-                                  <RiImageLine className="h-10 w-10 text-black/30 dark:text-white/30" />
+                                <div className="flex items-center justify-center py-12 bg-black/[.02] dark:bg-white/[.02]">
+                                  <RiImageLine className="h-12 w-12 text-black/30 dark:text-white/30" />
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          <div className="bg-black/[.02] dark:bg-white/[.02] p-3 rounded-lg">
-                            <div className="font-medium mb-1">
+                          <div className="bg-black/[.03] dark:bg-white/[.03] p-4 rounded-xl">
+                            <div className="font-medium text-sm uppercase tracking-wide mb-2 text-black/70 dark:text-white/70">
                               You receive
                               {request.status === "countered" &&
                                 request.messages.length > 0 &&
@@ -751,13 +750,13 @@ export default function TradeRequestsPage() {
                                   .from !== user?.id &&
                                 " (countered)"}
                             </div>
-                            <div>
+                            <div className="font-medium mb-3 text-lg">
                               {request.type === "sent"
                                 ? request.toListing.title
                                 : request.fromListing?.title || "Cash offer"}
                             </div>
                             {/* Listing image for what you receive/offer */}
-                            <div className="mt-2 relative w-full rounded-md bg-black/[.02] dark:bg-white/[.02] flex items-center justify-center">
+                            <div className="relative w-full rounded-lg overflow-hidden bg-white dark:bg-black/50 border border-black/10 dark:border-white/10">
                               {request.type === "sent" &&
                               request.toListing.images &&
                               request.toListing.images.length > 0 ? (
@@ -767,7 +766,7 @@ export default function TradeRequestsPage() {
                                     alt={request.toListing.title}
                                     fill
                                     sizes="(max-width: 640px) 100vw, 50vw"
-                                    className="object-contain absolute inset-0"
+                                    className="object-cover absolute inset-0 hover:scale-105 transition-transform duration-300"
                                   />
                                 </div>
                               ) : request.type === "received" &&
@@ -780,12 +779,12 @@ export default function TradeRequestsPage() {
                                     alt={request.fromListing.title}
                                     fill
                                     sizes="(max-width: 640px) 100vw, 50vw"
-                                    className="object-contain absolute inset-0"
+                                    className="object-cover absolute inset-0 hover:scale-105 transition-transform duration-300"
                                   />
                                 </div>
                               ) : (
-                                <div className="flex items-center justify-center py-10">
-                                  <RiImageLine className="h-10 w-10 text-black/30 dark:text-white/30" />
+                                <div className="flex items-center justify-center py-12 bg-black/[.02] dark:bg-white/[.02]">
+                                  <RiImageLine className="h-12 w-12 text-black/30 dark:text-white/30" />
                                 </div>
                               )}
                             </div>
@@ -793,30 +792,43 @@ export default function TradeRequestsPage() {
                         </div>
 
                         {request.messages.length > 0 && (
-                          <div className="mb-4">
-                            <div className="font-medium mb-2">
+                          <div>
+                            <div className="font-medium text-sm uppercase tracking-wide mb-2 text-black/70 dark:text-white/70">
                               Latest Message
                             </div>
-                            <div className="bg-black/[.02] dark:bg-white/[.02] p-3 rounded-lg text-sm">
-                              <div className="font-medium mb-1">
-                                {request.messages[request.messages.length - 1]
-                                  .from === user?.id
-                                  ? "You"
-                                  : otherUserName}
+                            <div className="bg-black/[.03] dark:bg-white/[.03] p-4 rounded-xl">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="h-6 w-6 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center text-xs">
+                                  {request.messages[request.messages.length - 1]
+                                    .from === user?.id
+                                    ? user?.firstName?.[0] || "Y"
+                                    : otherUserName.charAt(0)}
+                                </div>
+                                <div className="font-medium">
+                                  {request.messages[request.messages.length - 1]
+                                    .from === user?.id
+                                    ? "You"
+                                    : otherUserName}
+                                </div>
+                                <div className="text-black/40 dark:text-white/40 text-xs">
+                                  {new Date(
+                                    request.messages[
+                                      request.messages.length - 1
+                                    ].timestamp
+                                  ).toLocaleString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </div>
                               </div>
-                              <p>
+                              <p className="text-black/80 dark:text-white/80">
                                 {
                                   request.messages[request.messages.length - 1]
                                     .content
                                 }
                               </p>
-                              <div className="text-black/40 dark:text-white/40 text-xs mt-1">
-                                {new Date(
-                                  request.messages[
-                                    request.messages.length - 1
-                                  ].timestamp
-                                ).toLocaleString()}
-                              </div>
                             </div>
                           </div>
                         )}
@@ -845,7 +857,7 @@ export default function TradeRequestsPage() {
                         )}
                       </div>
 
-                      <div className="sm:w-48 flex flex-row sm:flex-col gap-2 justify-end">
+                      <div className="flex flex-col sm:flex-row gap-2 justify-end items-center mt-4">
                         {/* Status-dependent action buttons */}
                         {request.status === "pending" &&
                           request.type === "received" && (
@@ -854,7 +866,7 @@ export default function TradeRequestsPage() {
                                 onClick={() =>
                                   handleStatusChange(request._id, "accepted")
                                 }
-                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
                               >
                                 <RiCheckLine />
                                 Accept
@@ -864,7 +876,7 @@ export default function TradeRequestsPage() {
                                   setSelectedRequest(request._id);
                                   setShowCounterModal(true);
                                 }}
-                                className="flex items-center gap-1 px-3 py-1.5 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm justify-center"
                               >
                                 <RiExchangeLine />
                                 Counter
@@ -873,7 +885,7 @@ export default function TradeRequestsPage() {
                                 onClick={() =>
                                   handleStatusChange(request._id, "rejected")
                                 }
-                                className="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm justify-center"
                               >
                                 <RiCloseLine />
                                 Decline
@@ -896,7 +908,7 @@ export default function TradeRequestsPage() {
                                 onClick={() =>
                                   handleStatusChange(request._id, "accepted")
                                 }
-                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
                               >
                                 <RiCheckLine />
                                 Accept
@@ -906,7 +918,7 @@ export default function TradeRequestsPage() {
                                   setSelectedRequest(request._id);
                                   setShowCounterModal(true);
                                 }}
-                                className="flex items-center gap-1 px-3 py-1.5 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg text-sm justify-center"
                               >
                                 <RiExchangeLine />
                                 Counter Again
@@ -915,7 +927,7 @@ export default function TradeRequestsPage() {
                                 onClick={() =>
                                   handleStatusChange(request._id, "rejected")
                                 }
-                                className="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm justify-center"
+                                className="flex items-center gap-1 px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm justify-center"
                               >
                                 <RiCloseLine />
                                 Decline
@@ -928,7 +940,7 @@ export default function TradeRequestsPage() {
                             onClick={() =>
                               handleStatusChange(request._id, "completed")
                             }
-                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
+                            className="flex items-center gap-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm justify-center"
                           >
                             <RiCheckLine />
                             Mark Completed
@@ -937,7 +949,7 @@ export default function TradeRequestsPage() {
 
                         <Link
                           href={`/dashboard/messages?trade=${request._id}`}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-black/[.05] hover:bg-black/[.08] dark:bg-white/[.05] dark:hover:bg-white/[.08] rounded-lg text-sm justify-center"
+                          className="flex items-center gap-1 px-4 py-2 bg-black/[.05] hover:bg-black/[.08] dark:bg-white/[.05] dark:hover:bg-white/[.08] rounded-lg text-sm justify-center"
                         >
                           <RiMessage3Line />
                           Messages

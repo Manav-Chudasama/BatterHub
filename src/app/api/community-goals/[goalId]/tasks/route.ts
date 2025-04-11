@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import connectToDatabase from "@/lib/mongodb";
 import CommunityGoal from "@/models/CommunityGoal";
-import User from "@/models/User";
 import mongoose from "mongoose";
 
 // CORS headers

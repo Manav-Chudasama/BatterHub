@@ -18,6 +18,7 @@ import {
   RiBookmarkLine,
   RiAlertLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 interface Filters {
   availability: string[];
@@ -292,13 +293,15 @@ export default function ListingsPage() {
                 onClick={() => handleViewListing(listing._id)}
               >
                 <div className="relative aspect-[4/3]">
-                  <img
+                  <Image
                     src={
                       listing.images?.[0] ||
                       "https://placehold.co/400x300?text=No+Image"
                     }
                     alt={listing.title}
                     className="w-full h-full object-cover"
+                    width={400}
+                    height={300}
                   />
                   <div className="absolute top-2 right-2">
                     <span
@@ -367,10 +370,12 @@ export default function ListingsPage() {
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
                         {listing.user.profilePicture ? (
-                          <img
+                          <Image
                             src={listing.user.profilePicture}
                             alt={listing.user.name}
                             className="w-full h-full object-cover"
+                            width={32}
+                            height={32}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -404,13 +409,15 @@ export default function ListingsPage() {
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-48 lg:w-64">
                     <div className="aspect-[4/3] relative">
-                      <img
+                      <Image
                         src={
                           listing.images?.[0] ||
                           "https://placehold.co/400x300?text=No+Image"
                         }
                         alt={listing.title}
                         className="w-full h-full object-cover"
+                        width={200}
+                        height={150}
                       />
                       <div className="absolute top-2 right-2">
                         <span
@@ -488,10 +495,12 @@ export default function ListingsPage() {
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
                           {listing.user.profilePicture ? (
-                            <img
+                            <Image
                               src={listing.user.profilePicture}
                               alt={listing.user.name}
                               className="w-full h-full object-cover"
+                              width={32}
+                              height={32}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">

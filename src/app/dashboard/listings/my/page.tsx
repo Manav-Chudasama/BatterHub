@@ -6,18 +6,17 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion } from "framer-motion";
 import {
-
   RiCheckboxCircleLine,
   RiMoreLine,
   RiSearchLine,
   RiAddCircleLine,
   RiAlertLine,
-  
   RiEyeCloseLine,
   RiEyeLine,
   RiDeleteBinLine,
   RiEditLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 // Define listing interface
 interface Listing {
@@ -325,13 +324,15 @@ export default function MyListingsPage() {
                   {/* Image */}
                   <div className="md:w-48 lg:w-64">
                     <div className="aspect-[4/3] relative">
-                      <img
+                      <Image
                         src={
                           listing.images?.[0] ||
                           "https://placehold.co/400x300?text=No+Image"
                         }
                         alt={listing.title}
                         className="w-full h-full object-cover"
+                        width={400}
+                        height={300}
                       />
                       <div className="absolute top-2 right-2">
                         <span

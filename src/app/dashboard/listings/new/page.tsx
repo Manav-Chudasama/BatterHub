@@ -12,6 +12,7 @@ import {
   RiCheckLine,
   RiErrorWarningLine,
 } from "react-icons/ri";
+import Image from "next/image";
 
 // Define constants locally to avoid issues with model imports in client components
 const LISTING_CATEGORIES = [
@@ -357,10 +358,12 @@ export default function CreateListing() {
                     key={index}
                     className="relative aspect-square rounded-lg overflow-hidden border border-black/[.08] dark:border-white/[.08]"
                   >
-                    <img
+                    <Image
                       src={url}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
+                      width={400}
+                      height={400}
                     />
                     <button
                       type="button"

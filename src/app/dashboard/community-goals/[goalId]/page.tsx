@@ -29,6 +29,7 @@ import {
 } from "react-icons/ri";
 import { CommunityGoal, Contribution, ProofOfContribution } from "@/types";
 import { uploadFile } from "@/lib/uploadUtils";
+import Image from "next/image";
 
 interface ExtendedContribution extends Contribution {
   _id: string;
@@ -523,7 +524,7 @@ export default function CommunityGoalDetailPage() {
   };
 
   const handleEdit = () => {
-    router.push(`/dashboard/community-goals/${goalId}/edit`);
+    router.push(`/dashboard/community-goals/edit/${goalId}`);
   };
 
   const handleDelete = async () => {
@@ -632,7 +633,7 @@ export default function CommunityGoalDetailPage() {
           <div className="space-y-6">
             {/* Header with image */}
             <div className="relative aspect-[3/1] md:rounded-lg overflow-hidden">
-              <img
+              <Image
                 src={
                   goal.imageUrl ||
                   `https://placehold.co/1200x400/90EAC3/333333?text=${encodeURIComponent(
@@ -641,6 +642,8 @@ export default function CommunityGoalDetailPage() {
                 }
                 alt={goal.title}
                 className="w-full h-full object-cover"
+                width={1200}
+                height={400}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent">
                 <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -675,10 +678,12 @@ export default function CommunityGoalDetailPage() {
                     <div className="flex items-center">
                       <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden mr-2">
                         {goal.createdBy?.profilePicture ? (
-                          <img
+                          <Image
                             src={goal.createdBy.profilePicture}
                             alt={goal.createdBy.name}
                             className="w-full h-full object-cover"
+                            width={24}
+                            height={24}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-emerald-100 text-emerald-600 font-semibold">
@@ -933,10 +938,12 @@ export default function CommunityGoalDetailPage() {
                               <div className="flex items-center">
                                 <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-3">
                                   {contribution.user?.profilePicture ? (
-                                    <img
+                                    <Image
                                       src={contribution.user.profilePicture}
                                       alt={contribution.user.name}
                                       className="w-full h-full object-cover"
+                                      width={40}
+                                      height={40}
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -1081,10 +1088,12 @@ export default function CommunityGoalDetailPage() {
                                           >
                                             <div className="aspect-video w-full">
                                               {proof.fileType === "image" ? (
-                                                <img
+                                                <Image
                                                   src={proof.fileUrl}
                                                   alt={`Proof ${i + 1}`}
                                                   className="w-full h-full object-cover"
+                                                  width={800}
+                                                  height={400}
                                                 />
                                               ) : proof.fileType === "video" ? (
                                                 <div className="relative w-full h-full bg-black">
@@ -1183,12 +1192,14 @@ export default function CommunityGoalDetailPage() {
                                                 {/* User avatar with better fallback */}
                                                 {commentUser ? (
                                                   commentUser.profilePicture ? (
-                                                    <img
+                                                    <Image
                                                       src={
                                                         commentUser.profilePicture
                                                       }
                                                       alt={userName}
                                                       className="w-5 h-5 rounded-full mr-2"
+                                                      width={20}
+                                                      height={20}
                                                       onError={(e) => {
                                                         // If image fails to load, replace with initials
                                                         const target =
@@ -1603,10 +1614,12 @@ export default function CommunityGoalDetailPage() {
                                 >
                                   <div className="aspect-video w-full overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                                     {file.fileType === "image" ? (
-                                      <img
+                                      <Image
                                         src={file.fileUrl}
                                         alt={`Uploaded proof ${index + 1}`}
                                         className="w-full h-full object-cover"
+                                        width={800}
+                                        height={400}
                                       />
                                     ) : file.fileType === "video" ? (
                                       <video

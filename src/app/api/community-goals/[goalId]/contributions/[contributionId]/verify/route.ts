@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 interface Task {
   _id: mongoose.Types.ObjectId | string;
   quantityFulfilled: number;
+  contributions?: (mongoose.Types.ObjectId | string | TaskContribution)[];
 }
 
 interface Comment {
@@ -33,6 +34,15 @@ interface Contribution {
   verificationNotes?: string;
   comments?: Comment[];
 }
+
+// Type for task contribution - could be an ObjectId, string, or object with _id
+type TaskContribution = {
+  _id?: mongoose.Types.ObjectId | string;
+  toString(): string;
+};
+
+// Union type for all possible contribution reference types
+type ContributionRef = mongoose.Types.ObjectId | string | TaskContribution;
 
 // CORS headers
 const corsHeaders = {
@@ -220,11 +230,21 @@ export async function POST(
           if (goal.tasks[taskIndex].contributions) {
             goal.tasks[taskIndex].contributions = goal.tasks[
               taskIndex
-            ].contributions.filter(
-              (c: any) =>
-                c.toString() !== contributionId &&
-                c._id?.toString() !== contributionId
-            );
+            ].contributions.filter((c: ContributionRef) => {
+              const cStr = c.toString();
+              // Check if it's a string or ObjectId
+              if (
+                typeof c === "string" ||
+                c instanceof mongoose.Types.ObjectId
+              ) {
+                return cStr !== contributionId;
+              }
+              // Otherwise it's an object with possibly an _id field
+              return (
+                cStr !== contributionId &&
+                (!c._id || c._id.toString() !== contributionId)
+              );
+            });
             console.log(`Removed contribution from task's contributions array`);
           }
         }

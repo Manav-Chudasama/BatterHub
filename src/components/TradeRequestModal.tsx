@@ -167,7 +167,7 @@ const TradeRequestModal: React.FC<TradeRequestModalProps> = ({
           <div className="mb-4">
             <label
               htmlFor="offering"
-              className="block mb-2 text-sm font-medium text-black/70 dark:text-white/70 flex items-center"
+              className="mb-2 text-sm font-medium text-black/70 dark:text-white/70 flex items-center"
             >
               What are you offering in return?
               <span className="ml-1 text-red-500">*</span>

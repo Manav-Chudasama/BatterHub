@@ -13,6 +13,7 @@ import {
   RiEmotionHappyLine,
   RiChat3Line,
 } from "react-icons/ri";
+import Image from "next/image";
 
 interface ForumMessage {
   _id: string;
@@ -434,10 +435,12 @@ export default function CommunityForum({ goalId }: ForumProps) {
                           {msg.userId !== user?.id && (
                             <>
                               {msg.user?.profilePicture ? (
-                                <img
+                                <Image
                                   src={msg.user.profilePicture}
                                   alt={msg.user?.name || "User"}
                                   className="w-5 h-5 rounded-full mr-1.5 border border-gray-200 dark:border-gray-700"
+                                  width={20}
+                                  height={20}
                                 />
                               ) : (
                                 <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-1.5">

@@ -14,6 +14,7 @@ import {
   RiTeamLine,
 } from "react-icons/ri";
 import { DashboardStats, Listing, Activity, CommunityGoal } from "@/types";
+import Image from "next/image";
 
 const quickActions = [
   {
@@ -376,10 +377,12 @@ export default function Dashboard() {
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                         {listing.user?.profilePicture ? (
-                          <img
+                          <Image
                             src={listing.user.profilePicture}
                             alt={listing.user.name}
                             className="w-full h-full object-cover"
+                            width={40}
+                            height={40}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -539,10 +542,12 @@ const ActivityItem = ({ activity }: { activity: Activity }) => {
     <div className="flex items-start bg-white dark:bg-black rounded-lg border border-black/[.08] dark:border-white/[.08] p-4">
       <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-3 flex-shrink-0">
         {activity.user?.profilePicture ? (
-          <img
+          <Image
             src={activity.user.profilePicture}
             alt={activity.user.name}
             className="w-full h-full object-cover"
+            width={40}
+            height={40}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">

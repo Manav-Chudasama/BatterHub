@@ -26,6 +26,16 @@ export async function OPTIONS() {
   );
 }
 
+// Define interface for query parameters
+interface UserQueryParams {
+  location?: { $regex: string; $options: string };
+  skills?: { $in: string[] };
+  [key: string]:
+    | { $regex: string; $options: string }
+    | { $in: string[] }
+    | undefined;
+}
+
 /**
  * GET /api/users
  * Get all users with optional filtering
@@ -43,7 +53,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Build query based on parameters
-    const query: Record<string, any> = {};
+    const query: UserQueryParams = {};
     if (location) query.location = { $regex: location, $options: "i" };
     if (skill) query.skills = { $in: [skill] };
 

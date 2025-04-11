@@ -15,6 +15,7 @@ import {
   RiEmotionSadLine,
   RiLoader4Line,
 } from "react-icons/ri";
+import Image from "next/image";
 
 interface Listing {
   _id: string;
@@ -47,7 +48,6 @@ export default function SavedListingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [savedListings, setSavedListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
 
   // Fetch saved listings
   useEffect(() => {
@@ -69,7 +69,6 @@ export default function SavedListingsPage() {
       setSavedListings(data.savedListings || []);
     } catch (err) {
       console.error("Error fetching saved listings:", err);
-      setError("Failed to load saved listings. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -201,13 +200,15 @@ export default function SavedListingsPage() {
                 onClick={() => handleViewListing(listing._id)}
               >
                 <div className="relative aspect-[4/3]">
-                  <img
+                  <Image
                     src={
                       listing.images?.[0] ||
                       "https://placehold.co/400x300?text=No+Image"
                     }
                     alt={listing.title}
                     className="w-full h-full object-cover"
+                    width={400}
+                    height={300}
                   />
                   <div className="absolute top-2 right-2">
                     <span
@@ -275,10 +276,12 @@ export default function SavedListingsPage() {
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-2">
                         {listing.user?.profilePicture ? (
-                          <img
+                          <Image
                             src={listing.user.profilePicture}
                             alt={listing.user.name}
                             className="w-full h-full object-cover"
+                            width={32}
+                            height={32}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400 font-semibold">

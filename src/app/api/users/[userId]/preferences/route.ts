@@ -9,6 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Define interface for user preferences and updates
+interface UserPreferences {
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  theme?: "light" | "dark" | "system";
+  [key: string]: boolean | string | number | object | undefined;
+}
+
+// Type for MongoDB update operations on preferences fields
+type PreferenceUpdateData = {
+  [key: string]: boolean | string | number | object;
+};
+
 /**
  * OPTIONS /api/users/[userId]/preferences
  * Handle CORS preflight requests
@@ -72,7 +85,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = params;
-    const preferences = await request.json();
+    const preferences = (await request.json()) as UserPreferences;
 
     // Validate the request body
     if (!preferences || typeof preferences !== "object") {
@@ -116,10 +129,14 @@ export async function PUT(
     }
 
     // Update specific fields only, not replacing the entire preferences object
-    const updateData: Record<string, any> = {};
+    const updateData: PreferenceUpdateData = {};
 
     for (const [key, value] of Object.entries(preferences)) {
-      updateData[`preferences.${key}`] = value;
+      updateData[`preferences.${key}`] = value as
+        | boolean
+        | string
+        | number
+        | object;
     }
 
     const updatedUser = await User.findOneAndUpdate(

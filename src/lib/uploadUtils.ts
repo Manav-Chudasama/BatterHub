@@ -153,11 +153,11 @@ export const uploadFile = async (
   onProgress?: (progress: number) => void
 ): Promise<{ url: string; publicId: string; resourceType: string }> => {
   // Determine the appropriate resource type
-  let resourceType: "image" | "video" | "raw" | "auto";
+  //let resourceType: "image" | "video" | "raw" | "auto";
   let timeoutDuration = 60000; // Default 60 seconds timeout
 
   if (file.type.startsWith("video/")) {
-    resourceType = "video";
+    //resourceType = "video";
     // Extend timeout for video files based on size
     // Allow roughly 1MB per second upload speed as a conservative estimate
     const fileSizeMB = file.size / 1024 / 1024;
@@ -208,10 +208,10 @@ export const uploadFile = async (
     file.type.includes("document") ||
     file.type === "text/plain"
   ) {
-    resourceType = "raw"; // Use 'raw' for PDFs and documents to ensure they're handled correctly
+    //resourceType = "raw"; // Use 'raw' for PDFs and documents to ensure they're handled correctly
     console.log(`Processing document file: ${file.name} (${file.type})`);
   } else {
-    resourceType = "image"; // Default to 'image' for image files
+    //resourceType = "image"; // Default to 'image' for image files
     console.log(`Processing image file: ${file.name} (${file.type})`);
   }
 
@@ -456,7 +456,7 @@ const uploadLargeVideo = async (
     );
 
     // Progress simulation function
-    let progressTracker = {
+    const progressTracker = {
       currentProgress: 2,
       interval: null as NodeJS.Timeout | null,
       isComplete: false,
