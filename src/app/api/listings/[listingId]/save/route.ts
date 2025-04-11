@@ -35,7 +35,7 @@ export async function OPTIONS() {
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
     const { userId } = getAuth(req);
@@ -46,7 +46,7 @@ export async function POST(
       );
     }
 
-    const { listingId } = params;
+    const { listingId } = await params;
     if (!mongoose.Types.ObjectId.isValid(listingId)) {
       return NextResponse.json(
         { error: "Invalid listing ID" },
@@ -105,7 +105,7 @@ export async function POST(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
     const { userId } = getAuth(req);
@@ -116,7 +116,7 @@ export async function DELETE(
       );
     }
 
-    const { listingId } = params;
+    const { listingId } = await params;
     if (!mongoose.Types.ObjectId.isValid(listingId)) {
       return NextResponse.json(
         { error: "Invalid listing ID" },

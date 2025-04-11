@@ -34,10 +34,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const { listingId } = params;
+    const { listingId } = await params;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(listingId)) {
@@ -73,7 +73,7 @@ export async function GET(
 
     return NextResponse.json({ listing }, { headers: corsHeaders });
   } catch (error) {
-    const { listingId } = params;
+    const { listingId } = await params;
     console.error(`Error fetching listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch listing" },
@@ -88,10 +88,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-    { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const { listingId } = params;
+    const { listingId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -161,7 +161,7 @@ export async function PUT(
 
     return NextResponse.json(updatedListing, { headers: corsHeaders });
   } catch (error) {
-    const { listingId } = params;
+    const { listingId } = await params;
     console.error(`Error updating listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to update listing" },
@@ -176,10 +176,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const { listingId } = params;
+    const { listingId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -228,7 +228,7 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { listingId } = params;
+    const { listingId } = await params;
     console.error(`Error deleting listing ${listingId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete listing" },

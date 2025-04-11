@@ -48,10 +48,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     await connectToDatabase();
 
@@ -67,7 +67,8 @@ export async function GET(
     // Return location data or default empty object
     return NextResponse.json(user.location || {}, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error fetching location for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error fetching location for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch location data" },
       { status: 500, headers: corsHeaders }
@@ -81,10 +82,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const locationData = (await request.json()) as LocationData;
 
     // Validate the request body
@@ -193,7 +194,8 @@ export async function PUT(
 
     return NextResponse.json(updatedUser.location, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error updating location for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error updating location for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update location data" },
       { status: 500, headers: corsHeaders }

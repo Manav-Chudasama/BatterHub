@@ -66,10 +66,10 @@ function formatRelativeTime(date: Date): string {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const auth = getAuth(request);
 
     // Ensure that the authenticated user is requesting their own activity
@@ -258,7 +258,8 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error("Error fetching user activity:", error);
+    const { userId } = await params;
+    console.error(`Error fetching user activity for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch user activity" },
       { status: 500, headers: corsHeaders }

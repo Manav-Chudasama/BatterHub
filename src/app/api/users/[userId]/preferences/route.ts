@@ -45,10 +45,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     await connectToDatabase();
 
@@ -64,10 +64,8 @@ export async function GET(
     // Return preferences or default empty object
     return NextResponse.json(user.preferences || {}, { headers: corsHeaders });
   } catch (error) {
-    console.error(
-      `Error fetching preferences for user ${params.userId}:`,
-      error
-    );
+    const { userId } = await params;
+    console.error(`Error fetching preferences for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch preferences" },
       { status: 500, headers: corsHeaders }
@@ -81,10 +79,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const preferences = (await request.json()) as UserPreferences;
 
     // Validate the request body
@@ -154,10 +152,8 @@ export async function PUT(
 
     return NextResponse.json(updatedUser.preferences, { headers: corsHeaders });
   } catch (error) {
-    console.error(
-      `Error updating preferences for user ${params.userId}:`,
-      error
-    );
+    const { userId } = await params;
+    console.error(`Error updating preferences for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update preferences" },
       { status: 500, headers: corsHeaders }

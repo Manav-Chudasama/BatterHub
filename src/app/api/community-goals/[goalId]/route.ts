@@ -90,7 +90,8 @@ export async function GET(
 
     return NextResponse.json({ goal }, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error fetching community goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error fetching community goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch community goal" },
       { status: 500, headers: corsHeaders }
@@ -186,7 +187,8 @@ export async function PUT(
 
     return NextResponse.json(updatedGoal, { headers: corsHeaders });
   } catch (error) {
-    console.error(`Error updating community goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error updating community goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to update community goal" },
       { status: 500, headers: corsHeaders }
@@ -253,7 +255,8 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error deleting community goal ${params.goalId}:`, error);
+    const { goalId } = await params;
+    console.error(`Error deleting community goal ${goalId}:`, error);
     return NextResponse.json(
       { error: "Failed to delete community goal" },
       { status: 500, headers: corsHeaders }

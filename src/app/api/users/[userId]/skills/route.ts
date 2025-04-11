@@ -46,10 +46,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     await connectToDatabase();
 
@@ -70,7 +70,8 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error fetching skills for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error fetching skills for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch skills and interests" },
       { status: 500, headers: corsHeaders }
@@ -84,10 +85,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
     const { skills, interests } = body;
 
@@ -132,7 +133,8 @@ export async function PUT(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error updating skills for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error updating skills for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to update skills and interests" },
       { status: 500, headers: corsHeaders }
@@ -146,10 +148,10 @@ export async function PUT(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const body = await request.json();
     const { skill, interest, skills, interests } = body;
 
@@ -208,7 +210,8 @@ export async function POST(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(`Error adding skills for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error adding skills for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to add skills or interests" },
       { status: 500, headers: corsHeaders }
@@ -222,10 +225,10 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const { searchParams } = new URL(request.url);
     const skill = searchParams.get("skill");
     const interest = searchParams.get("interest");
@@ -270,10 +273,8 @@ export async function DELETE(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(
-      `Error removing skill/interest for user ${params.userId}:`,
-      error
-    );
+    const { userId } = await params;
+    console.error(`Error removing skill/interest for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to remove skill or interest" },
       { status: 500, headers: corsHeaders }

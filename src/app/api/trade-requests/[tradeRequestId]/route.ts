@@ -36,7 +36,7 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tradeRequestId: string } }
+  { params }: { params: Promise<{ tradeRequestId: string }> }
 ) {
   try {
     const { tradeRequestId } = await params;
@@ -111,7 +111,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { tradeRequestId: string } }
+  { params }: { params: Promise<{ tradeRequestId: string }> }
 ) {
   try {
     const { tradeRequestId } = await params;

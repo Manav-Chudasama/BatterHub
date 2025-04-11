@@ -34,10 +34,10 @@ export async function OPTIONS() {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ listingId: string }> }
 ) {
   try {
-    const { listingId } = params;
+    const { listingId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication

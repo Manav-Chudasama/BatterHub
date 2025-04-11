@@ -33,10 +33,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     await connectToDatabase();
 
@@ -69,10 +69,8 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    console.error(
-      `Error fetching saved listings for user ${params.userId}:`,
-      error
-    );
+    const { userId } = await params;
+    console.error(`Error fetching saved listings for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch saved listings" },
       { status: 500, headers: corsHeaders }
@@ -86,10 +84,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const { listingId } = await request.json();
 
     if (!listingId) {
@@ -128,14 +126,16 @@ export async function POST(
       );
     } catch (err) {
       // Handle invalid ObjectId format
-      console.error(`Error saving listing for user ${params.userId}:`, err);
+      const { userId } = await params;
+      console.error(`Error saving listing for user ${userId}:`, err);
       return NextResponse.json(
         { error: "Invalid listing ID format" },
         { status: 400, headers: corsHeaders }
       );
     }
   } catch (error) {
-    console.error(`Error saving listing for user ${params.userId}:`, error);
+    const { userId } = await params;
+    console.error(`Error saving listing for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to save listing" },
       { status: 500, headers: corsHeaders }
@@ -149,10 +149,10 @@ export async function POST(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const { searchParams } = new URL(request.url);
     const listingId = searchParams.get("listingId");
 
@@ -192,17 +192,19 @@ export async function DELETE(
       );
     } catch (err) {
       // Handle invalid ObjectId format
-      console.error(`Error removing saved listing for user ${params.userId}:`, err);
+      const { userId } = await params;
+      console.error(
+        `Error removing saved listing for user ${userId}:`,
+        err
+      );
       return NextResponse.json(
         { error: "Invalid listing ID format" },
         { status: 400, headers: corsHeaders }
       );
     }
   } catch (error) {
-    console.error(
-      `Error removing saved listing for user ${params.userId}:`,
-      error
-    );
+    const { userId } = await params;
+    console.error(`Error removing saved listing for user ${userId}:`, error);
     return NextResponse.json(
       { error: "Failed to remove saved listing" },
       { status: 500, headers: corsHeaders }

@@ -34,10 +34,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  { params }: { params: Promise<{ reviewId: string }> }
 ) {
   try {
-    const { reviewId } = params;
+    const { reviewId } = await params;
 
     await connectToDatabase();
 
@@ -68,11 +68,11 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  { params }: { params: Promise<{ reviewId: string }> }
 ) {
   try {
     const { userId } = getAuth(request);
-    const { reviewId } = params;
+    const { reviewId } = await params;
 
     // Check authentication
     if (!userId) {
@@ -173,11 +173,11 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { reviewId: string } }
+  { params }: { params: Promise<{ reviewId: string }> }
 ) {
   try {
     const { userId } = getAuth(request);
-    const { reviewId } = params;
+    const { reviewId } = await params;
 
     // Check authentication
     if (!userId) {
