@@ -16,7 +16,7 @@ export async function OPTIONS() {
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const { userId } = getAuth(req);
