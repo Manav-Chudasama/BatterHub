@@ -74,10 +74,10 @@ export async function OPTIONS() {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string; contributionId: string }> }
 ) {
   try {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -302,7 +302,7 @@ export async function POST(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
     console.error(
       `Error verifying contribution ${contributionId} for goal ${goalId}:`,
       error

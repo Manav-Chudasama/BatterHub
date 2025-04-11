@@ -56,11 +56,11 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
     // Properly await params in Next.js 14
-    const { goalId } = await Promise.resolve(context.params);
+    const { goalId } = await params;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(goalId)) {
@@ -166,11 +166,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
     // Properly await params in Next.js 14
-    const { goalId } = await Promise.resolve(context.params);
+    const { goalId } = await params;
     const { userId } = getAuth(request);
 
     console.log("goalId", goalId);

@@ -50,10 +50,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const goalId = params.goalId;
+    const { goalId } = await params;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(goalId)) {
@@ -104,10 +104,10 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const goalId = params.goalId;
+    const { goalId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -200,10 +200,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const goalId = params.goalId;
+    const { goalId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication

@@ -34,10 +34,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const { goalId } = params;
+    const { goalId } = await params;
 
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(goalId)) {
@@ -78,10 +78,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const { goalId } = params;
+    const { goalId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -169,10 +169,10 @@ export async function POST(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const { goalId } = params;
+    const { goalId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -271,10 +271,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string }> }
 ) {
   try {
-    const { goalId } = params;
+    const { goalId } = await params;
     const { userId } = getAuth(request);
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get("taskId");

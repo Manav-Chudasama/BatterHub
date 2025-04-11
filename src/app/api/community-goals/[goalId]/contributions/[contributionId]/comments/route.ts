@@ -55,10 +55,10 @@ export async function OPTIONS() {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string; contributionId: string }> }
 ) {
   try {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
 
     // Validate MongoDB ObjectIds
     if (
@@ -105,7 +105,7 @@ export async function GET(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
     console.error(
       `Error fetching comments for contribution ${contributionId} in goal ${goalId}:`,
       error
@@ -123,10 +123,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: any }
+  { params }: { params: Promise<{ goalId: string; contributionId: string }> }
 ) {
   try {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
     const { userId } = getAuth(request);
 
     // Check authentication
@@ -234,7 +234,7 @@ export async function POST(
       { headers: corsHeaders }
     );
   } catch (error) {
-    const { goalId, contributionId } = params;
+    const { goalId, contributionId } = await params;
     console.error(
       `Error adding comment to contribution ${contributionId} in goal ${goalId}:`,
       error
