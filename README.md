@@ -81,7 +81,7 @@ BatterHub is a skill-sharing and resource exchange platform specifically designe
 1. Clone the repository:
 
 ```bash
-[git clone https://github.com/yourusername/batterhub.git](https://github.com/Manav-Chudasama/BatterHub.git)
+git clone https://github.com/yourusername/batterhub.git
 cd batterhub
 ```
 
