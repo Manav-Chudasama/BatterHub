@@ -81,7 +81,7 @@ BatterHub is a skill-sharing and resource exchange platform specifically designe
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/batterhub.git
+[git clone https://github.com/yourusername/batterhub.git](https://github.com/Manav-Chudasama/BatterHub.git)
 cd batterhub
 ```
 
@@ -158,10 +158,6 @@ We welcome contributions to BatterHub! Please follow these steps:
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Contact
-
-Project Link: [https://github.com/yourusername/batterhub](https://github.com/yourusername/batterhub)
 
 ## 🙏 Acknowledgements
 
